@@ -13,6 +13,8 @@ export const ResumenVenta = () => {
   const getImpuesto = useCartStore((s) => s.getImpuesto);
   const getTotal = useCartStore((s) => s.getTotal);
   const getTotalItems = useCartStore((s) => s.getTotalItems);
+  const aplicaIgv = useCartStore((s) => s.aplicaIgv);
+  const porcentajeIgv = useCartStore((s) => s.porcentajeIgv);
 
   const subtotal = getSubtotal();
   const descuento = getTotalDescuento();
@@ -35,10 +37,12 @@ export const ResumenVenta = () => {
         </div>
       )}
 
-      <div className="flex justify-between text-xs text-gray-400">
-        <span>IGV (18%)</span>
-        <span>{formatCurrency(impuesto)}</span>
-      </div>
+      {aplicaIgv && (
+        <div className="flex justify-between text-xs text-gray-400">
+          <span>IGV ({porcentajeIgv ?? 18}%)</span>
+          <span>{formatCurrency(impuesto)}</span>
+        </div>
+      )}
 
       {/* Separador */}
       <div className="border-t border-gray-300 pt-2">

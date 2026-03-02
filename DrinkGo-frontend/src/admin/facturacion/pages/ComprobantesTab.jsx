@@ -8,8 +8,9 @@
  */
 import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Eye, XCircle, Search, CheckCircle, AlertCircle, Hash, X } from 'lucide-react';
+import { Eye, XCircle, Search, CheckCircle, AlertCircle, Hash } from 'lucide-react';
 import { useComprobantes, useCambiarEstadoComprobante } from '../hooks/useFacturacion';
+import { ComprobanteViewModal } from '../components/ComprobanteViewModal';
 
 /* ─── Mapeo de estados internos a etiquetas locales ─── */
 const getEstadoLocal = (estadoDocumento) => {
@@ -281,73 +282,12 @@ export const ComprobantesTab = () => {
         </div>
       </div>
 
-      {/* ─── Modal detalle ─── */}
+      {/* ─── Modal comprobante completo ─── */}
       {selectedDoc && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedDoc(null)}>
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Detalle del Comprobante</h2>
-              <button onClick={() => setSelectedDoc(null)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500 text-xs mb-0.5">Número</p>
-                <p className="font-mono font-medium">{selectedDoc.numeroDocumento}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-0.5">Tipo</p>
-                <p>{TIPO_DOC_LABELS[selectedDoc.tipoDocumento] || selectedDoc.tipoDocumento}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-0.5">Fecha Emisión</p>
-                <p>{formatDate(selectedDoc.fechaEmision || selectedDoc.creadoEn)}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-0.5">Estado</p>
-                {(() => {
-                  const est = getEstadoLocal(selectedDoc.estadoDocumento);
-                  return (
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${est.badge}`}>
-                      {est.label}
-                    </span>
-                  );
-                })()}
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-0.5">Receptor</p>
-                <p>{selectedDoc.razonSocialReceptor || selectedDoc.receptor || '-'}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-0.5">Moneda</p>
-                <p>{selectedDoc.moneda || 'PEN'}</p>
-              </div>
-              <div className="col-span-2 grid grid-cols-3 gap-4 pt-3 border-t border-gray-100">
-                <div>
-                  <p className="text-gray-500 text-xs mb-0.5">Subtotal</p>
-                  <p className="font-medium">{formatCurrency(selectedDoc.subtotal)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs mb-0.5">IGV</p>
-                  <p className="font-medium">{formatCurrency(selectedDoc.impuestos)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs mb-0.5">Total</p>
-                  <p className="font-bold text-lg">{formatCurrency(selectedDoc.total)}</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setSelectedDoc(null)}
-                className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
+        <ComprobanteViewModal
+          doc={selectedDoc}
+          onClose={() => setSelectedDoc(null)}
+        />
       )}
     </div>
   );

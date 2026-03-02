@@ -5,6 +5,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { negocioService } from '../services/configuracionService';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { message } from '@/shared/utils/notifications';
 
 export const useNegocioConfig = (negocioId) => {
@@ -19,8 +20,12 @@ export const useNegocioConfig = (negocioId) => {
 
   const updateNegocio = useMutation({
     mutationFn: negocioService.update,
-    onSuccess: () => {
+    onSuccess: (updatedNegocio) => {
       queryClient.invalidateQueries({ queryKey: ['negocio-config'] });
+      // Sincronizar el store global para que POS y otros módulos vean los cambios
+      if (updatedNegocio) {
+        useAdminAuthStore.getState().setNegocio(updatedNegocio);
+      }
       message.success('Datos del negocio actualizados exitosamente');
     },
     onError: (err) => {

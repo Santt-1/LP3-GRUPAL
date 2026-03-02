@@ -20,7 +20,7 @@ import {
   LogIn,
   Filter,
   ShoppingCart,
-  DollarSign,
+  Banknote,
   Clock,
   CheckCircle,
   AlertTriangle,
@@ -132,7 +132,7 @@ const SesionFullView = ({ sesionData, columns, isActive = false }) => {
         <StatCard title="Monto Apertura" value={formatCurrency(montoAp)} icon={Wallet} />
         <StatCard title="Total Ingresos" value={formatCurrency(totalIngresos)} icon={TrendingUp} className="!border-green-200" />
         <StatCard title="Total Egresos" value={formatCurrency(totalEgresos)} icon={TrendingDown} className="!border-red-200" />
-        <StatCard title="Saldo Actual" value={formatCurrency(saldo)} icon={DollarSign} className="!border-blue-200" />
+        <StatCard title="Saldo Actual" value={formatCurrency(saldo)} icon={Banknote} className="!border-blue-200" />
       </div>
 
       {/* Desglose */}
@@ -427,7 +427,7 @@ export const MovimientosCajaPage = () => {
             <StatCard title="Monto Apertura" value={formatCurrency(montoApertura)} icon={Wallet} />
             <StatCard title="Total Ingresos" value={formatCurrency(totalIngresos)} icon={TrendingUp} className="!border-green-200" />
             <StatCard title="Total Egresos" value={formatCurrency(totalEgresos)} icon={TrendingDown} className="!border-red-200" />
-            <StatCard title="Saldo Actual" value={formatCurrency(saldoActual)} icon={DollarSign} className="!border-blue-200" />
+            <StatCard title="Saldo Actual" value={formatCurrency(saldoActual)} icon={Banknote} className="!border-blue-200" />
           </div>
 
           {/* Desglose rapido */}

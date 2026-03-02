@@ -92,13 +92,30 @@ export const useCartStore = create((set, get) => ({
   },
 
   /**
-   * Impuesto (IGV 18%).
-   * Se calcula SOBRE la base imponible → IGV = base × 0.18
-   * El total a pagar será base + IGV.
+   * Configuración IGV del negocio.
+   * Se establece desde POS.jsx con los datos del negocio.
+   */
+  aplicaIgv: true,
+  porcentajeIgv: 18,
+
+  setIgvConfig: (aplicaIgv, porcentajeIgv) => {
+    set({
+      aplicaIgv: aplicaIgv !== false,
+      porcentajeIgv: (porcentajeIgv != null && porcentajeIgv >= 0) ? Number(porcentajeIgv) : 18,
+    });
+  },
+
+  /**
+   * Impuesto (IGV dinámico).
+   * Si aplicaIgv es false → 0.
+   * Si aplicaIgv es true → base × (porcentajeIgv / 100).
    */
   getImpuesto: () => {
+    const { aplicaIgv, porcentajeIgv } = get();
+    if (!aplicaIgv) return 0;
     const base = get().getBaseImponible();
-    return +(base * 0.18).toFixed(2);
+    const rate = (porcentajeIgv ?? 18) / 100;
+    return +(base * rate).toFixed(2);
   },
 
   /** Total a pagar = base imponible + IGV */
