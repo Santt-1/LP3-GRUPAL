@@ -77,7 +77,7 @@ public class Negocios {
     private BigDecimal porcentajeIgv = new BigDecimal("18.00");
 
     @Enumerated(EnumType.STRING)
-    private EstadoNegocio estado = EstadoNegocio.pendiente;
+    private EstadoNegocio estado = EstadoNegocio.activo;
 
     @Column(name = "esta_activo")
     private Boolean estaActivo = true;
