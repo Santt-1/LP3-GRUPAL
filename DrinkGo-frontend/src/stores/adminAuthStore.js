@@ -13,6 +13,9 @@ export const useAdminAuthStore = create(
       login: (user, token, negocio, permisos = []) =>
         set({ user, token, negocio, permisos }),
 
+      /** Actualiza el objeto negocio (p.ej. tras guardar configuración) */
+      setNegocio: (negocio) => set({ negocio }),
+
       logout: () => {
         set({ user: null, token: null, negocio: null, permisos: [] });
       },

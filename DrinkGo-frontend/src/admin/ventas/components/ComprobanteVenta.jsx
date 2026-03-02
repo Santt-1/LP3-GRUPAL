@@ -283,10 +283,12 @@ export const ComprobanteVenta = ({
                       <span>-{formatCurrency(descuento)}</span>
                     </div>
                   )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 11, color: '#555' }}>
-                    <span>IGV (18%):</span>
-                    <span>{formatCurrency(igv)}</span>
-                  </div>
+                  {igv > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 11, color: '#555' }}>
+                      <span>IGV ({negocio?.porcentajeIgv ?? 18}%):</span>
+                      <span>{formatCurrency(igv)}</span>
+                    </div>
+                  )}
                   <div style={{
                     display: 'flex', justifyContent: 'space-between', padding: '6px 0 3px',
                     fontSize: 13, fontWeight: 700, color: '#1a1a1a', borderTop: '2px solid #333',

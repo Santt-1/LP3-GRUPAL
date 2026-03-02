@@ -4,7 +4,7 @@
  * Historial de ventas del negocio con filtro, detalle y anulación.
  */
 import { useState, useMemo } from 'react';
-import { Eye, Ban, Search, Receipt, DollarSign, XCircle } from 'lucide-react';
+import { Eye, Ban, Search, Receipt, Banknote, XCircle } from 'lucide-react';
 import { Card } from '@/admin/components/ui/Card';
 import { Button } from '@/admin/components/ui/Button';
 import { Badge } from '@/admin/components/ui/Badge';
@@ -170,7 +170,7 @@ export const HistorialVentas = () => {
         <StatCard
           title="Monto total"
           value={formatCurrency(montoTotal)}
-          icon={DollarSign}
+          icon={Banknote}
         />
         <StatCard
           title="Anuladas"

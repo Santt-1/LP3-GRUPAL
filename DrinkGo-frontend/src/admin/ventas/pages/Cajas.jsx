@@ -8,7 +8,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Edit, Monitor, Clock, Power,
-  LogIn, ArrowRight, User, DollarSign,
+  LogIn, ArrowRight, User, Users, Banknote,
   Eye, Search, Calendar, CheckCircle, AlertTriangle,
 } from 'lucide-react';
 import { Card } from '@/admin/components/ui/Card';
@@ -392,7 +392,7 @@ export const Cajas = () => {
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <DollarSign size={14} className="text-gray-400" />
+                        <Banknote size={14} className="text-gray-400" />
                         <span>
                           <strong>Monto apertura:</strong> {formatCurrency(sesion?.montoApertura || 0)}
                         </span>
@@ -493,7 +493,7 @@ export const Cajas = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard title="Cajas registradas" value={cajasActivas.length} icon={Monitor} />
         <StatCard title="Sesiones abiertas" value={sesionesAbiertas.length} icon={Clock} />
-        <StatCard title="Total sesiones" value={sesiones.length} icon={DollarSign} />
+        <StatCard title="Total sesiones" value={sesiones.length} icon={Users} />
       </div>
 
       {/* Tabla de cajas */}

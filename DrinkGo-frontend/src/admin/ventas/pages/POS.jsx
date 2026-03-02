@@ -4,9 +4,9 @@
  * Página principal del Punto de Venta.
  * Si no hay turno abierto redirige a Cajas para aperturar.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Power, ArrowDownUp, ShoppingBag, AlertCircle, LogIn } from 'lucide-react';
+import { Banknote, Power, ArrowDownUp, ShoppingBag, AlertCircle, LogIn } from 'lucide-react';
 import { Card } from '@/admin/components/ui/Card';
 import { Button } from '@/admin/components/ui/Button';
 import { Badge } from '@/admin/components/ui/Badge';
@@ -37,6 +37,14 @@ export const POS = () => {
   const clearCart = useCartStore((s) => s.clearCart);
   const descuentoGlobal = useCartStore((s) => s.descuentoGlobal);
   const razonDescuento = useCartStore((s) => s.razonDescuento);
+  const setIgvConfig = useCartStore((s) => s.setIgvConfig);
+
+  /* ─── Sincronizar config IGV del negocio al carrito ─── */
+  useEffect(() => {
+    if (negocio) {
+      setIgvConfig(negocio.aplicaIgv, negocio.porcentajeIgv);
+    }
+  }, [negocio, setIgvConfig]);
 
   const [showPagoModal, setShowPagoModal] = useState(false);
   const [showMovimientoModal, setShowMovimientoModal] = useState(false);
@@ -212,7 +220,7 @@ export const POS = () => {
                 onClick={() => setShowPagoModal(true)}
                 disabled={items.length === 0}
               >
-                <DollarSign size={20} className="mr-2" />
+                <Banknote size={20} className="mr-2" />
                 Cobrar {formatCurrency(total)}
               </Button>
             </div>

@@ -36,8 +36,6 @@ import DrinkGo.DrinkGo_backend.repository.*;
 @Service
 public class PosService {
 
-    private static final BigDecimal IGV_RATE = new BigDecimal("0.18");
-
     @Autowired private VentasRepository ventasRepo;
     @Autowired private DetalleVentasRepository detalleVentasRepo;
     @Autowired private PagosVentaRepository pagosVentaRepo;
@@ -159,7 +157,16 @@ public class PosService {
         BigDecimal descuentoGlobal = request.getDescuentoGlobal() != null
                 ? request.getDescuentoGlobal() : BigDecimal.ZERO;
         BigDecimal baseImponible = subtotal.subtract(descuentoGlobal);
-        BigDecimal igv = baseImponible.multiply(IGV_RATE).setScale(2, RoundingMode.HALF_UP);
+
+        // IGV dinámico según configuración del negocio
+        boolean aplicaIgv = negocio.getAplicaIgv() != null ? negocio.getAplicaIgv() : true;
+        BigDecimal igvRate = BigDecimal.ZERO;
+        if (aplicaIgv) {
+            BigDecimal porcentaje = negocio.getPorcentajeIgv() != null
+                    ? negocio.getPorcentajeIgv() : new BigDecimal("18.00");
+            igvRate = porcentaje.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+        }
+        BigDecimal igv = baseImponible.multiply(igvRate).setScale(2, RoundingMode.HALF_UP);
         BigDecimal total = baseImponible.add(igv);
 
         // ── 7. Crear entidad Ventas ──
@@ -212,7 +219,7 @@ public class PosService {
                     ? item.getPrecioUnitario() : BigDecimal.ZERO;
             BigDecimal descItem = item.getDescuento() != null ? item.getDescuento() : BigDecimal.ZERO;
             BigDecimal itemSubtotal = precioUnit.multiply(cantidad).subtract(descItem);
-            BigDecimal itemIgv = itemSubtotal.multiply(IGV_RATE).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal itemIgv = itemSubtotal.multiply(igvRate).setScale(2, RoundingMode.HALF_UP);
 
             detalle.setCantidad(cantidad);
             detalle.setPrecioUnitario(precioUnit);
