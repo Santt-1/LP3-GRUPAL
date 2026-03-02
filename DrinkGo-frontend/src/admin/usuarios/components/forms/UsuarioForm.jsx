@@ -24,6 +24,7 @@ export const UsuarioForm = ({
   initialData,
   negocioId,
   roles = [],
+  sedes = [],
   onSubmit,
   onCancel,
   isLoading = false,
@@ -32,6 +33,9 @@ export const UsuarioForm = ({
 
   // Rol seleccionado (gestionado fuera de react-hook-form para evitar coerción)
   const [selectedRolId, setSelectedRolId] = useState(null);
+
+  // Sede seleccionada
+  const [selectedSedeId, setSelectedSedeId] = useState(null);
 
   // Obtener el rol actual del usuario cuando estamos en modo edición
   const { data: usuariosRolesData = [] } = useQuery({
@@ -99,6 +103,8 @@ export const UsuarioForm = ({
 
     // Incluir el rolId seleccionado para que el padre lo gestione
     payload.rolId = selectedRolId;
+    // Incluir el sedeId seleccionado
+    payload.sedeId = selectedSedeId;
 
     onSubmit(payload);
   };
@@ -176,7 +182,18 @@ export const UsuarioForm = ({
         />
       )}
 
-      {/* Contraseña */}
+      {/* Sede */}
+      {sedes.length > 0 && (
+        <Select
+          label="Sede asignada"
+          value={selectedSedeId ?? ''}
+          onChange={(e) => setSelectedSedeId(e.target.value ? Number(e.target.value) : null)}
+          options={sedes.map((s) => ({ value: s.id, label: s.nombre }))}
+          placeholder="Sin sede asignada"
+        />
+      )}
+
+      {/* Contraseña */}}
       <div className="border-t border-gray-100 pt-4">
         <p className="text-sm font-medium text-gray-700 mb-3">
           {isEdit ? 'Nueva contraseña (dejar en blanco para no cambiar)' : 'Contraseña'}

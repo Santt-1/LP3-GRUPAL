@@ -28,6 +28,11 @@ public class SedesController {
         return service.buscarTodos();
     }
 
+    @GetMapping("/sedes/por-negocio/{negocioId}")
+    public List<Sedes> buscarPorNegocio(@PathVariable("negocioId") Long negocioId) {
+        return service.buscarPorNegocio(negocioId);
+    }
+
     @PostMapping("/sedes")
     public ResponseEntity<?> guardar(@RequestBody Sedes entity) {
         try {

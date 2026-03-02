@@ -222,3 +222,33 @@ INSERT INTO usuarios_roles (usuario_id, rol_id)
 SELECT @usr_premiumwines_id, @rol_premiumwines_id
 WHERE NOT EXISTS (SELECT 1 FROM usuarios_roles WHERE usuario_id = @usr_premiumwines_id AND rol_id = @rol_premiumwines_id);
 
+-- ============================================================
+-- ASIGNAR ADMINS A SUS SEDES PRINCIPALES (usuarios_sedes)
+-- Cada admin queda asignado a la sede principal de su negocio
+-- ============================================================
+
+SET @sede_donpepe_principal   = (SELECT id FROM sedes WHERE codigo = 'SEDE-PRINCIPAL' LIMIT 1);
+SET @sede_labodega_principal  = (SELECT id FROM sedes WHERE codigo = 'LB-01'          LIMIT 1);
+SET @sede_elimperio_principal = (SELECT id FROM sedes WHERE codigo = 'EI-MAIN'        LIMIT 1);
+SET @sede_premiumwines_princ  = (SELECT id FROM sedes WHERE codigo = 'PW-001'         LIMIT 1);
+
+INSERT INTO usuarios_sedes (usuario_id, sede_id, es_predeterminado)
+SELECT @usr_donpepe_id, @sede_donpepe_principal, 1
+WHERE @usr_donpepe_id IS NOT NULL AND @sede_donpepe_principal IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM usuarios_sedes WHERE usuario_id = @usr_donpepe_id);
+
+INSERT INTO usuarios_sedes (usuario_id, sede_id, es_predeterminado)
+SELECT @usr_labodega_id, @sede_labodega_principal, 1
+WHERE @usr_labodega_id IS NOT NULL AND @sede_labodega_principal IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM usuarios_sedes WHERE usuario_id = @usr_labodega_id);
+
+INSERT INTO usuarios_sedes (usuario_id, sede_id, es_predeterminado)
+SELECT @usr_elimperio_id, @sede_elimperio_principal, 1
+WHERE @usr_elimperio_id IS NOT NULL AND @sede_elimperio_principal IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM usuarios_sedes WHERE usuario_id = @usr_elimperio_id);
+
+INSERT INTO usuarios_sedes (usuario_id, sede_id, es_predeterminado)
+SELECT @usr_premiumwines_id, @sede_premiumwines_princ, 1
+WHERE @usr_premiumwines_id IS NOT NULL AND @sede_premiumwines_princ IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM usuarios_sedes WHERE usuario_id = @usr_premiumwines_id);
+
