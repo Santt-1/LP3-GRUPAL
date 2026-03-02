@@ -31,7 +31,6 @@ import {
   Monitor,
   Wallet,
   Receipt,
-  Zap,
 } from 'lucide-react';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
 
@@ -75,10 +74,6 @@ const VENTAS_SUBITEMS = [
 
 /* ─── Sub-items del menú Facturación ─── */
 const FACTURACION_SUBITEMS = [
-  { to: '/admin/facturacion/comprobantes', label: 'Comprobantes', icon: FileText },
-  { to: '/admin/facturacion/series', label: 'Series', icon: Hash },
-  { to: '/admin/facturacion/pse', label: 'PSE', icon: Zap, requiresPse: true },
-=======
   { to: '/admin/facturacion/comprobantes', label: 'Comprobantes', icon: FileText, permiso: 'm.facturacion.comprobantes' },
   { to: '/admin/facturacion/series', label: 'Series', icon: Hash, permiso: 'm.facturacion.series' },
   { to: '/admin/facturacion/metodos-pago', label: 'Métodos de Pago', icon: CreditCard, permiso: 'm.facturacion.metodos' },
