@@ -31,6 +31,7 @@ import {
   Monitor,
   Wallet,
   Receipt,
+  MapPin,
 } from 'lucide-react';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
 
@@ -154,7 +155,8 @@ export const AdminLayout = () => {
   const [openMenus, setOpenMenus] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, negocio, logout, hasPermiso, permisos } = useAdminAuthStore();
+  const { user, negocio, sede, logout, hasPermiso, permisos } = useAdminAuthStore();
+
 
   /**
    * Filtra los items del menú según los permisos del usuario.
@@ -195,6 +197,12 @@ export const AdminLayout = () => {
             <p className="text-xs text-gray-400 whitespace-nowrap truncate max-w-[140px]">
               {negocio?.nombre || negocio?.razonSocial || 'Panel Admin'}
             </p>
+            {sede && (
+              <p className="text-xs text-green-400 whitespace-nowrap truncate max-w-[140px] flex items-center gap-1 mt-0.5">
+                <MapPin size={10} />
+                {sede.nombre}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -385,6 +393,15 @@ export const AdminLayout = () => {
           </button>
 
           <div className="flex-1" />
+
+          {/* Sede badge */}
+          {sede && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full cursor-default" title={sede.nombre}>
+              <MapPin size={12} className="text-green-600" />
+              {sede.nombre}
+              {sede.codigo && <span className="text-gray-400">· {sede.codigo}</span>}
+            </span>
+          )}
 
           {/* Negocio badge */}
           {negocio && (

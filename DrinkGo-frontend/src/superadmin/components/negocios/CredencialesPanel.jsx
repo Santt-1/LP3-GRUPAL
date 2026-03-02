@@ -9,6 +9,7 @@ import {
   Check,
   Copy,
   ShieldCheck,
+  MapPin,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -28,16 +29,45 @@ export const CredencialesPanel = ({
     queryFn: () => negociosService.getUsuariosByNegocio(negocio.id),
     enabled: !!negocio?.id,
   });
+
+  // Sedes disponibles para asignar
+  const { data: sedes = [] } = useQuery({
+    queryKey: ['sedes-negocio', negocio?.id],
+    queryFn: () => negociosService.getSedesByNegocio(negocio.id),
+    enabled: !!negocio?.id,
+  });
+
+  // Mapa usuarioId → sede asignada (usando endpoint filtrado por negocio)
+  const { data: usuariosSedes = [] } = useQuery({
+    queryKey: ['usuarios-sedes-negocio', negocio?.id],
+    queryFn: () => negociosService.getUsuariosSedesByNegocio(negocio.id),
+    enabled: !!negocio?.id,
+    staleTime: 30_000,
+  });
+  const sedeByUsuario = Object.fromEntries(
+    usuariosSedes.map((us) => [us.usuarioId, {
+      id: us.id,
+      nombre: us.sedeNombre,
+      codigo: us.sedeCodigo,
+      sedeId: us.sedeId,
+    }]),
+  );
+
   const [showNewForm, setShowNewForm] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [newNombres, setNewNombres] = useState('');
   const [newApellidos, setNewApellidos] = useState('');
   const [newPassword, setNewPassword] = useState('Admin123!');
   const [showNewPass, setShowNewPass] = useState(false);
+  const [newSedeId, setNewSedeId] = useState('');
 
   const [resetFor, setResetFor] = useState(null); // user.id
   const [resetPass, setResetPass] = useState('');
   const [showResetPass, setShowResetPass] = useState(false);
+
+  const [changingSedeFor, setChangingSedeFor] = useState(null); // user.id
+  const [changeSedeId, setChangeSedeId] = useState('');
+  const [isSavingChangeSede, setIsSavingChangeSede] = useState(false);
 
   const [copiedId, setCopiedId] = useState(null);
 
@@ -53,7 +83,7 @@ export const CredencialesPanel = ({
 
   const handleCreate = async () => {
     if (!newEmail || !newPassword || !newNombres || !newApellidos) return;
-    await onCreateUsuario({
+    const createdUser = await onCreateUsuario({
       negocio: { id: negocio.id },
       email: newEmail,
       hashContrasena: newPassword,
@@ -61,12 +91,38 @@ export const CredencialesPanel = ({
       apellidos: newApellidos,
       estaActivo: 1,
     });
+    // Asignar sede si se seleccionó una
+    if (newSedeId && createdUser?.id) {
+      try {
+        await negociosService.assignUsuarioSede(createdUser.id, Number(newSedeId));
+      } catch (_) { /* usuario creado, sede puede asignarse luego */ }
+    }
     queryClient.invalidateQueries({ queryKey: ['usuarios-negocio', negocio.id] });
+    queryClient.invalidateQueries({ queryKey: ['usuarios-sedes-negocio', negocio.id] });
     setShowNewForm(false);
     setNewEmail('');
     setNewNombres('');
     setNewApellidos('');
     setNewPassword('Admin123!');
+    setNewSedeId('');
+  };
+
+  const handleChangeSede = async (user) => {
+    setIsSavingChangeSede(true);
+    try {
+      const existing = sedeByUsuario[user.id];
+      if (existing?.id) {
+        await negociosService.deleteUsuarioSede(existing.id);
+      }
+      if (changeSedeId) {
+        await negociosService.assignUsuarioSede(user.id, Number(changeSedeId));
+      }
+      queryClient.invalidateQueries({ queryKey: ['usuarios-sedes-negocio', negocio.id] });
+      setChangingSedeFor(null);
+      setChangeSedeId('');
+    } finally {
+      setIsSavingChangeSede(false);
+    }
   };
 
   const handleResetPassword = async (user) => {
@@ -138,27 +194,91 @@ export const CredencialesPanel = ({
                       )}
                     </button>
                   </div>
+                  {/* Sede asignada */}
+                  {sedeByUsuario[user.id] ? (
+                    <span className="inline-flex items-center gap-1 mt-1 text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                      <MapPin size={10} />
+                      {sedeByUsuario[user.id].nombre}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 mt-1 text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                      <MapPin size={10} />
+                      Sin sede asignada
+                    </span>
+                  )}
                 </div>
 
-                {/* Reset btn */}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    if (resetFor === user.id) {
-                      setResetFor(null);
-                    } else {
-                      setResetFor(user.id);
-                      setResetPass('');
-                      setShowResetPass(false);
-                    }
-                  }}
-                >
-                  <KeyRound size={14} className="mr-1" />
-                  {resetFor === user.id ? 'Cancelar' : 'Cambiar clave'}
-                </Button>
+                {/* Actions */}
+                <div className="flex gap-1.5 flex-shrink-0">
+                  {sedes.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (changingSedeFor === user.id) {
+                          setChangingSedeFor(null);
+                        } else {
+                          setChangingSedeFor(user.id);
+                          setChangeSedeId(sedeByUsuario[user.id]?.sedeId?.toString() ?? '');
+                          setResetFor(null);
+                        }
+                      }}
+                    >
+                      <MapPin size={14} className="mr-1" />
+                      {changingSedeFor === user.id ? 'Cancelar' : 'Sede'}
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (resetFor === user.id) {
+                        setResetFor(null);
+                      } else {
+                        setResetFor(user.id);
+                        setResetPass('');
+                        setShowResetPass(false);
+                        setChangingSedeFor(null);
+                      }
+                    }}
+                  >
+                    <KeyRound size={14} className="mr-1" />
+                    {resetFor === user.id ? 'Cancelar' : 'Clave'}
+                  </Button>
+                </div>
               </div>
+
+              {/* Cambiar sede form */}
+              {changingSedeFor === user.id && (
+                <div className="flex items-center gap-2 pt-1">
+                  <select
+                    value={changeSedeId}
+                    onChange={(e) => setChangeSedeId(e.target.value)}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Sin sede asignada</option>
+                    {sedes.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nombre}{s.esPrincipal ? ' (principal)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleChangeSede(user)}
+                    disabled={isSavingChangeSede}
+                  >
+                    {isSavingChangeSede ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      'Guardar'
+                    )}
+                  </Button>
+                </div>
+              )}
 
               {/* Reset password form */}
               {resetFor === user.id && (
@@ -256,6 +376,26 @@ export const CredencialesPanel = ({
               </button>
             </div>
           </div>
+          {/* Sede */}
+          {sedes.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-gray-700 block mb-1">
+                Sede asignada
+              </label>
+              <select
+                value={newSedeId}
+                onChange={(e) => setNewSedeId(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Sin sede (asignar luego)</option>
+                {sedes.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nombre}{s.esPrincipal ? ' (principal)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex gap-2 justify-end">
             <Button
               type="button"

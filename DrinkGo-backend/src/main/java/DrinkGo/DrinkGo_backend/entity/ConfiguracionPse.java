@@ -3,7 +3,6 @@ package DrinkGo.DrinkGo_backend.entity;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
-import lombok.Data;
 
 /**
  * Configuración del Proveedor de Servicios Electrónicos (PSE) por negocio.
@@ -15,7 +14,6 @@ import lombok.Data;
  */
 @Entity
 @Table(name = "configuracion_pse")
-@Data
 public class ConfiguracionPse {
 
     @Id
@@ -65,5 +63,86 @@ public class ConfiguracionPse {
     @PreUpdate
     protected void onUpdate() {
         actualizadoEn = LocalDateTime.now();
+    }
+
+    // Getters y Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Negocios getNegocio() {
+        return negocio;
+    }
+
+    public void setNegocio(Negocios negocio) {
+        this.negocio = negocio;
+    }
+
+    public String getProveedor() {
+        return proveedor;
+    }
+
+    public void setProveedor(String proveedor) {
+        this.proveedor = proveedor;
+    }
+
+    public String getEntorno() {
+        return entorno;
+    }
+
+    public void setEntorno(String entorno) {
+        this.entorno = entorno;
+    }
+
+    public String getApiToken() {
+        return apiToken;
+    }
+
+    public void setApiToken(String apiToken) {
+        this.apiToken = apiToken;
+    }
+
+    public String getUrlServicio() {
+        return urlServicio;
+    }
+
+    public void setUrlServicio(String urlServicio) {
+        this.urlServicio = urlServicio;
+    }
+
+    public String getRucEmisor() {
+        return rucEmisor;
+    }
+
+    public void setRucEmisor(String rucEmisor) {
+        this.rucEmisor = rucEmisor;
+    }
+
+    public Boolean getEstaActivo() {
+        return estaActivo;
+    }
+
+    public void setEstaActivo(Boolean estaActivo) {
+        this.estaActivo = estaActivo;
+    }
+
+    public LocalDateTime getCreadoEn() {
+        return creadoEn;
+    }
+
+    public void setCreadoEn(LocalDateTime creadoEn) {
+        this.creadoEn = creadoEn;
+    }
+
+    public LocalDateTime getActualizadoEn() {
+        return actualizadoEn;
+    }
+
+    public void setActualizadoEn(LocalDateTime actualizadoEn) {
+        this.actualizadoEn = actualizadoEn;
     }
 }

@@ -12,15 +12,23 @@ import { useAdminAuthStore } from '@/stores/adminAuthStore';
 /* ═══ CAJAS REGISTRADORAS ═══ */
 
 export const useCajas = () => {
-  const { negocio } = useAdminAuthStore();
+  const { negocio, sede } = useAdminAuthStore();
   const negocioId = negocio?.id;
+  const sedeId = sede?.id;
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['cajas', negocioId],
+    queryKey: ['cajas', negocioId, sedeId],
     queryFn: () => cajasService.getByNegocio(negocioId),
     enabled: !!negocioId,
     staleTime: 1000 * 60 * 5,
+    select: (data) => {
+      // Filtrar client-side por sede activa
+      if (sedeId) {
+        return data.filter((c) => c.sede?.id === sedeId);
+      }
+      return data;
+    },
   });
 
   const crearMutation = useMutation({
@@ -140,14 +148,21 @@ export const useSesionActions = () => {
 /* ═══ SESIONES POR NEGOCIO ═══ */
 
 export const useSesiones = () => {
-  const { negocio } = useAdminAuthStore();
+  const { negocio, sede } = useAdminAuthStore();
   const negocioId = negocio?.id;
+  const sedeId = sede?.id;
 
   const query = useQuery({
-    queryKey: ['sesiones', negocioId],
+    queryKey: ['sesiones', negocioId, sedeId],
     queryFn: () => cajasService.getSesionesByNegocio(negocioId),
     enabled: !!negocioId,
     staleTime: 1000 * 60 * 2,
+    select: (data) => {
+      if (sedeId) {
+        return data.filter((s) => s.caja?.sede?.id === sedeId);
+      }
+      return data;
+    },
   });
 
   return {
