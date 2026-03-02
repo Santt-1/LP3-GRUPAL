@@ -180,6 +180,25 @@ export const usuariosRolesService = {
 };
 
 /* ================================================================
+ *  USUARIOS ↔ SEDES (asignación de sede al usuario)
+ * ================================================================ */
+export const usuariosSedesService = {
+  /**
+   * Asigna una sede a un usuario.
+   * @param {{ usuario: { id }, sede: { id }, esPredeterminado?: boolean }} payload
+   */
+  assign: async (payload) => {
+    const { data } = await adminApi.post('/usuarios-sedes', payload);
+    return data;
+  },
+
+  revoke: async (id) => {
+    const { data } = await adminApi.delete(`/usuarios-sedes/${id}`);
+    return data;
+  },
+};
+
+/* ================================================================
  *  CONSULTA DE DOCUMENTOS (DNI / RUC via PeruDevs)
  * ================================================================ */
 export const consultaDocumentoService = {

@@ -12,14 +12,21 @@ import { useAdminAuthStore } from '@/stores/adminAuthStore';
 /* ═══ LISTAR VENTAS POR NEGOCIO ═══ */
 
 export const useVentas = () => {
-  const { negocio } = useAdminAuthStore();
+  const { negocio, sede } = useAdminAuthStore();
   const negocioId = negocio?.id;
+  const sedeId = sede?.id;
 
   const query = useQuery({
-    queryKey: ['ventas', negocioId],
+    queryKey: ['ventas', negocioId, sedeId],
     queryFn: () => ventasService.getByNegocio(negocioId),
     enabled: !!negocioId,
     staleTime: 1000 * 60 * 2,
+    select: (data) => {
+      if (sedeId) {
+        return data.filter((v) => v.sede?.id === sedeId);
+      }
+      return data;
+    },
   });
 
   return {

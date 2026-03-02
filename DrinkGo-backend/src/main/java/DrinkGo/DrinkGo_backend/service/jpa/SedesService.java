@@ -22,6 +22,10 @@ public class SedesService implements ISedesService {
         return repoSedes.findAll();
     }
 
+    public List<Sedes> buscarPorNegocio(Long negocioId) {
+        return repoSedes.findByNegocioId(negocioId);
+    }
+
     public void guardar(Sedes sedes) {
         Long negocioId = sedes.getNegocio().getId();
 

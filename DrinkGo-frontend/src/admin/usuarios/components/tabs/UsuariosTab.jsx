@@ -9,7 +9,9 @@ import { Plus, Eye, Edit, Trash2, UserCheck, UserX } from 'lucide-react';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { useUsuarios } from '../../hooks/useUsuarios';
 import { useRoles } from '../../hooks/useRoles';
-import { usuariosRolesService } from '../../services/usuariosClientesService';
+import { usuariosRolesService, usuariosSedesService } from '../../services/usuariosClientesService';
+import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/admin/services/adminApi';
 import { UsuarioForm } from '../forms/UsuarioForm';
 import { Table } from '@/admin/components/ui/Table';
 import { Badge } from '@/admin/components/ui/Badge';
@@ -34,6 +36,17 @@ export const UsuariosTab = () => {
     useUsuarios(negocioId);
 
   const { roles } = useRoles();
+
+  // Sedes del negocio (para asignar al crear usuario)
+  const { data: sedes = [] } = useQuery({
+    queryKey: ['sedes', 'por-negocio', negocioId],
+    queryFn: async () => {
+      const { data } = await adminApi.get(`/sedes/por-negocio/${negocioId}`);
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!negocioId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 400);
@@ -62,21 +75,29 @@ export const UsuariosTab = () => {
 
   /* ─── Handlers ─── */
   const handleCreate = async (data) => {
-    const { rolId, ...usuarioData } = data;
+    const { rolId, sedeId, ...usuarioData } = data;
     const createdUser = await createUsuario(usuarioData);
     // Asignar rol si se seleccionó uno
     if (rolId && createdUser?.id) {
       try {
         await usuariosRolesService.assign({ usuario: { id: createdUser.id }, rol: { id: rolId } });
-      } catch (_) {
-        // El usuario fue creado; el rol podrá asignarse luego
-      }
+      } catch (_) {}
+    }
+    // Asignar sede si se seleccionó una
+    if (sedeId && createdUser?.id) {
+      try {
+        await usuariosSedesService.assign({
+          usuario: { id: createdUser.id },
+          sede: { id: sedeId },
+          esPredeterminado: true,
+        });
+      } catch (_) {}
     }
     setIsCreateOpen(false);
   };
 
   const handleUpdate = async (data) => {
-    const { rolId, ...usuarioData } = data;
+    const { rolId, sedeId, ...usuarioData } = data;
     await updateUsuario(usuarioData);
     // Actualizar la asignación de rol
     try {
@@ -217,6 +238,7 @@ export const UsuariosTab = () => {
         <UsuarioForm
           negocioId={negocioId}
           roles={roles}
+          sedes={sedes}
           onSubmit={handleCreate}
           onCancel={() => setIsCreateOpen(false)}
           isLoading={isCreating}

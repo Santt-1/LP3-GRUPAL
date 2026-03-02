@@ -7,16 +7,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { almacenesService, sedesService } from '../services/inventarioService';
 import { message } from '@/shared/utils/notifications';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 
 export const useAlmacenes = (negocioId) => {
   const queryClient = useQueryClient();
+  const sedeActiva = useAdminAuthStore((s) => s.sede);
 
   /* ─── Queries ─── */
   const almacenesQuery = useQuery({
     queryKey: ['almacenes', negocioId],
     queryFn: almacenesService.getAll,
     enabled: !!negocioId,
-    select: (data) => data.filter((a) => a.negocio?.id === negocioId),
+    select: (data) => {
+      const porNegocio = data.filter((a) => a.negocio?.id === negocioId);
+      // Si hay sede activa, mostrar solo almacenes de esa sede
+      if (sedeActiva?.id) {
+        return porNegocio.filter((a) => a.sede?.id === sedeActiva.id);
+      }
+      return porNegocio;
+    },
   });
 
   const sedesQuery = useQuery({

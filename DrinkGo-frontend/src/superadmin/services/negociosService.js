@@ -41,6 +41,11 @@ export const negociosService = {
     return toArray(data);
   },
 
+  getSedesByNegocio: async (negocioId) => {
+    const { data } = await api.get(`/sedes/por-negocio/${negocioId}`);
+    return toArray(data);
+  },
+
   createSede: async (sede) => {
     const { data } = await api.post('/sedes', sede);
     return data;
@@ -53,6 +58,31 @@ export const negociosService = {
 
   deleteSede: async (id) => {
     const { data } = await api.delete(`/sedes/${id}`);
+    return data;
+  },
+
+  /* ─── Asignación usuario ↔ sede ─── */
+  assignUsuarioSede: async (usuarioId, sedeId) => {
+    const { data } = await api.post('/usuarios-sedes', {
+      usuario: { id: usuarioId },
+      sede: { id: sedeId },
+      esPredeterminado: true,
+    });
+    return data;
+  },
+
+  getUsuariosSedes: async () => {
+    const { data } = await api.get('/usuarios-sedes');
+    return toArray(data);
+  },
+
+  getUsuariosSedesByNegocio: async (negocioId) => {
+    const { data } = await api.get(`/usuarios-sedes/por-negocio/${negocioId}`);
+    return toArray(data);
+  },
+
+  deleteUsuarioSede: async (id) => {
+    const { data } = await api.delete(`/usuarios-sedes/${id}`);
     return data;
   },
 

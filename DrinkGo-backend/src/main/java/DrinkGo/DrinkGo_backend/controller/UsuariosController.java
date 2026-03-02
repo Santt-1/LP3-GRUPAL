@@ -3,19 +3,26 @@ package DrinkGo.DrinkGo_backend.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import DrinkGo.DrinkGo_backend.entity.Negocios;
+import DrinkGo.DrinkGo_backend.entity.Sedes;
 import DrinkGo.DrinkGo_backend.entity.Suscripciones;
 import DrinkGo.DrinkGo_backend.entity.Usuarios;
 import DrinkGo.DrinkGo_backend.entity.UsuariosRoles;
+import DrinkGo.DrinkGo_backend.entity.UsuariosSedes;
 import DrinkGo.DrinkGo_backend.repository.SuscripcionesRepository;
 import DrinkGo.DrinkGo_backend.repository.UsuariosRolesRepository;
+import DrinkGo.DrinkGo_backend.repository.UsuariosSedesRepository;
 import DrinkGo.DrinkGo_backend.security.JwtUtil;
 import DrinkGo.DrinkGo_backend.service.IUsuariosService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +51,9 @@ public class UsuariosController {
 
     @Autowired
     private UsuariosRolesRepository usuariosRolesRepo;
+
+    @Autowired
+    private UsuariosSedesRepository usuariosSedesRepo;
 
     @GetMapping("/usuarios/{id}/permisos")
     public List<String> obtenerPermisos(@PathVariable Long id) {
@@ -203,6 +213,28 @@ public class UsuariosController {
         negocioData.put("tienePse", negocio.getTienePse());
 
         Map<String, Object> response = new HashMap<>();
+        // Obtener la sede asignada al usuario (predeterminada o primera disponible)
+        List<UsuariosSedes> usuarioSedes = usuariosSedesRepo.findByUsuarioId(usuario.getId());
+        Map<String, Object> sedeData = null;
+        if (!usuarioSedes.isEmpty()) {
+            UsuariosSedes us = usuarioSedes.stream()
+                    .filter(x -> Boolean.TRUE.equals(x.getEsPredeterminado()))
+                    .findFirst()
+                    .orElse(usuarioSedes.get(0));
+            Sedes s = us.getSede();
+            sedeData = new HashMap<>();
+            sedeData.put("id", s.getId());
+            sedeData.put("codigo", s.getCodigo());
+            sedeData.put("nombre", s.getNombre());
+            sedeData.put("direccion", s.getDireccion());
+            sedeData.put("ciudad", s.getCiudad() != null ? s.getCiudad() : "");
+            sedeData.put("departamento", s.getDepartamento() != null ? s.getDepartamento() : "");
+            sedeData.put("telefono", s.getTelefono() != null ? s.getTelefono() : "");
+            sedeData.put("esPrincipal", Boolean.TRUE.equals(s.getEsPrincipal()));
+            sedeData.put("deliveryHabilitado", Boolean.TRUE.equals(s.getDeliveryHabilitado()));
+            sedeData.put("recojoHabilitado", Boolean.TRUE.equals(s.getRecojoHabilitado()));
+        }
+
         response.put("token", token);
         response.put("usuario", Map.of(
                 "id", usuario.getId(),
@@ -211,7 +243,62 @@ public class UsuariosController {
                 "nombres", usuario.getNombres(),
                 "apellidos", usuario.getApellidos()));
         response.put("negocio", negocioData);
-        response.put("permisos", usuariosRolesRepo.findCodigosPermisoByUsuarioId(usuario.getId()));
+        if (sedeData != null) {
+            response.put("sede", sedeData);
+        }
+
+        // ── Permisos: módulos habilitados desde suscripción JSON ∩ permisos del rol ──
+        // Prioridad: suscripcion.modulosPersonalizados > plan.modulosHabilitados > sin
+        // restricción
+        // 1. Determinar módulos habilitados del negocio (null = sin restricción)
+        Set<String> codigosHabilitados = null;
+        if (suscripcionOpt.isPresent()) {
+            Suscripciones sus = suscripcionOpt.get();
+            String modulosJson = sus.getModulosPersonalizados();
+            if (modulosJson == null && sus.getPlan() != null) {
+                modulosJson = sus.getPlan().getModulosHabilitados();
+            }
+            if (modulosJson != null && !modulosJson.isBlank()) {
+                try {
+                    // Parse JSON array ["dashboard","ventas",...] →
+                    // Set<"m.dashboard","m.ventas",...>
+                    String clean = modulosJson.replaceAll("[\\[\\]\"\\s]", "");
+                    codigosHabilitados = new HashSet<>();
+                    for (String part : clean.split(",")) {
+                        if (!part.isBlank()) {
+                            codigosHabilitados.add("m." + part.trim());
+                        }
+                    }
+                } catch (Exception ignored) {
+                    // Si falla el parse → sin restricción
+                }
+            }
+        }
+
+        // 2. Permisos del rol del usuario
+        List<String> rolePermisos = usuariosRolesRepo.findCodigosPermisoByUsuarioId(usuario.getId());
+
+        // 3. Calcular permisos finales
+        List<String> permisosFinales;
+        if (codigosHabilitados == null) {
+            // Sin restricción de plan → todos los permisos del rol
+            // Sin rol tampoco → devolver todos los módulos base
+            permisosFinales = rolePermisos.isEmpty()
+                    ? new ArrayList<>(List.of("m.dashboard", "m.configuracion", "m.usuarios",
+                            "m.catalogo", "m.inventario", "m.compras",
+                            "m.ventas", "m.facturacion", "m.reportes"))
+                    : rolePermisos;
+        } else if (rolePermisos.isEmpty()) {
+            // Plan con módulos pero sin rol asignado → todos los módulos habilitados
+            permisosFinales = new ArrayList<>(codigosHabilitados);
+        } else {
+            // Rol + plan → intersección
+            permisosFinales = rolePermisos.stream()
+                    .filter(codigosHabilitados::contains)
+                    .collect(Collectors.toList());
+        }
+        response.put("permisos", permisosFinales);
+
         if (suscripcionData != null) {
             response.put("suscripcion", suscripcionData);
         }

@@ -3,7 +3,6 @@ package DrinkGo.DrinkGo_backend.entity;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
-import lombok.Data;
 
 /**
  * Historial de comunicaciones con el PSE.
@@ -15,7 +14,6 @@ import lombok.Data;
  */
 @Entity
 @Table(name = "historial_pse")
-@Data
 public class HistorialPse {
 
     @Id
@@ -74,5 +72,118 @@ public class HistorialPse {
     @PrePersist
     protected void onCreate() {
         creadoEn = LocalDateTime.now();
+    }
+
+    // Getters y Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Negocios getNegocio() {
+        return negocio;
+    }
+
+    public void setNegocio(Negocios negocio) {
+        this.negocio = negocio;
+    }
+
+    public DocumentosFacturacion getDocumento() {
+        return documento;
+    }
+
+    public void setDocumento(DocumentosFacturacion documento) {
+        this.documento = documento;
+    }
+
+    public String getTipoOperacion() {
+        return tipoOperacion;
+    }
+
+    public void setTipoOperacion(String tipoOperacion) {
+        this.tipoOperacion = tipoOperacion;
+    }
+
+    public String getNumeroDocumento() {
+        return numeroDocumento;
+    }
+
+    public void setNumeroDocumento(String numeroDocumento) {
+        this.numeroDocumento = numeroDocumento;
+    }
+
+    public String getRequestPayload() {
+        return requestPayload;
+    }
+
+    public void setRequestPayload(String requestPayload) {
+        this.requestPayload = requestPayload;
+    }
+
+    public String getResponsePayload() {
+        return responsePayload;
+    }
+
+    public void setResponsePayload(String responsePayload) {
+        this.responsePayload = responsePayload;
+    }
+
+    public String getCodigoRespuesta() {
+        return codigoRespuesta;
+    }
+
+    public void setCodigoRespuesta(String codigoRespuesta) {
+        this.codigoRespuesta = codigoRespuesta;
+    }
+
+    public String getMensajeRespuesta() {
+        return mensajeRespuesta;
+    }
+
+    public void setMensajeRespuesta(String mensajeRespuesta) {
+        this.mensajeRespuesta = mensajeRespuesta;
+    }
+
+    public Boolean getExitoso() {
+        return exitoso;
+    }
+
+    public void setExitoso(Boolean exitoso) {
+        this.exitoso = exitoso;
+    }
+
+    public Integer getIntentoNumero() {
+        return intentoNumero;
+    }
+
+    public void setIntentoNumero(Integer intentoNumero) {
+        this.intentoNumero = intentoNumero;
+    }
+
+    public String getProveedor() {
+        return proveedor;
+    }
+
+    public void setProveedor(String proveedor) {
+        this.proveedor = proveedor;
+    }
+
+    public String getEntorno() {
+        return entorno;
+    }
+
+    public void setEntorno(String entorno) {
+        this.entorno = entorno;
+    }
+
+    public LocalDateTime getCreadoEn() {
+        return creadoEn;
+    }
+
+    public void setCreadoEn(LocalDateTime creadoEn) {
+        this.creadoEn = creadoEn;
     }
 }
