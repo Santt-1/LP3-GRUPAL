@@ -284,211 +284,215 @@ WHERE NOT EXISTS (SELECT 1 FROM unidades_medida WHERE negocio_id = @n_premium AN
 -- ╔══════════════════════════════════════════════════════════════╗
 -- ║  4. PRODUCTOS  (5 por negocio × 4 negocios = 20)           ║
 -- ║                                                              ║
--- ║  Nota: Los precios se manejan ahora en otros módulos:       ║
--- ║  - Inventario → lotes_inventario.costo_unitario_compra      ║
--- ║  - Ventas     → detalle_ventas.precio_unitario              ║
--- ║  - Combos     → combos.precio_combo / detalle_combos        ║
+-- ║  Cada producto incluye precio_venta y precio_venta_minimo   ║
+-- ║  para el sistema POS y ventas.                              ║
+-- ║  Precios asignados (IGV incluido):                          ║
+-- ║    Ron Cartavio Black 750ml      → S/45.00 (mín S/40.00)   ║
+-- ║    Cerveza Pilsen Callao 630ml   → S/ 7.00 (mín S/ 6.00)   ║
+-- ║    Vino Casillero del Diablo     → S/35.00 (mín S/30.00)   ║
+-- ║    Papitas Lay's Clásica 200g    → S/ 8.00 (mín S/ 7.00)   ║
+-- ║    Coca-Cola 1.5L                → S/ 6.00 (mín S/ 5.00)   ║
 -- ╚══════════════════════════════════════════════════════════════╝
 
 -- ── DON PEPE ──
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_donpepe, 'DP-RON-001', 'Ron Cartavio Black 750ml', 'ron-cartavio-black-750ml',
     'Ron negro peruano de 750ml con 40° de grado alcohólico. Ideal para cócteles y consumo directo.',
-    40.00, 18.00, 1, 1, 1, NOW(), NOW(),
+    40.00, 18.00, 1, 45.00, 40.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_donpepe AND nombre = 'Rones' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_donpepe AND nombre = 'Cartavio' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_donpepe AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_donpepe AND sku = 'DP-RON-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_donpepe, 'DP-CER-001', 'Cerveza Pilsen Callao 630ml', 'cerveza-pilsen-callao-630ml',
     'Cerveza lager peruana de 630ml con 5° de grado alcohólico. La cerveza del Perú.',
-    5.00, 18.00, 1, 1, 1, NOW(), NOW(),
+    5.00, 18.00, 1, 7.00, 6.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_donpepe AND nombre = 'Cervezas' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_donpepe AND nombre = 'Pilsen' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_donpepe AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_donpepe AND sku = 'DP-CER-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_donpepe, 'DP-VIN-001', 'Vino Casillero del Diablo Cabernet 750ml', 'vino-casillero-diablo-cabernet-750ml',
     'Vino tinto chileno Cabernet Sauvignon de 750ml con 13.5° de grado alcohólico.',
-    13.50, 18.00, 1, 1, 1, NOW(), NOW(),
+    13.50, 18.00, 1, 35.00, 30.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_donpepe AND nombre = 'Vinos y Espumantes' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_donpepe AND nombre = 'Concha y Toro' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_donpepe AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_donpepe AND sku = 'DP-VIN-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_donpepe, 'DP-SNK-001', 'Papitas Lay''s Clásica 200g', 'papitas-lays-clasica-200g',
     'Papas fritas sabor clásico en bolsa de 200g. Acompañamiento perfecto.',
-    NULL, 18.00, 1, 1, 1, NOW(), NOW(),
+    NULL, 18.00, 1, 8.00, 7.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_donpepe AND nombre = 'Snacks y Piqueos' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_donpepe AND nombre = 'Lay''s' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_donpepe AND codigo = 'PAQ' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_donpepe AND sku = 'DP-SNK-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_donpepe, 'DP-GAS-001', 'Coca-Cola 1.5L', 'coca-cola-1-5l',
     'Gaseosa Coca-Cola botella de 1.5 litros. Ideal para mezclar o acompañar.',
-    NULL, 18.00, 1, 1, 1, NOW(), NOW(),
+    NULL, 18.00, 1, 6.00, 5.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_donpepe AND nombre = 'Gaseosas y Bebidas' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_donpepe AND nombre = 'Coca-Cola' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_donpepe AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_donpepe AND sku = 'DP-GAS-001');
 
 -- ── LA BODEGA ──
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_labodega, 'LB-RON-001', 'Ron Cartavio Black 750ml', 'ron-cartavio-black-750ml',
     'Ron negro peruano de 750ml con 40° de grado alcohólico. Ideal para cócteles y consumo directo.',
-    40.00, 18.00, 1, 1, 1, NOW(), NOW(),
+    40.00, 18.00, 1, 45.00, 40.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_labodega AND nombre = 'Rones' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_labodega AND nombre = 'Cartavio' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_labodega AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_labodega AND sku = 'LB-RON-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_labodega, 'LB-CER-001', 'Cerveza Pilsen Callao 630ml', 'cerveza-pilsen-callao-630ml',
     'Cerveza lager peruana de 630ml con 5° de grado alcohólico. La cerveza del Perú.',
-    5.00, 18.00, 1, 1, 1, NOW(), NOW(),
+    5.00, 18.00, 1, 7.00, 6.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_labodega AND nombre = 'Cervezas' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_labodega AND nombre = 'Pilsen' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_labodega AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_labodega AND sku = 'LB-CER-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_labodega, 'LB-VIN-001', 'Vino Casillero del Diablo Cabernet 750ml', 'vino-casillero-diablo-cabernet-750ml',
     'Vino tinto chileno Cabernet Sauvignon de 750ml con 13.5° de grado alcohólico.',
-    13.50, 18.00, 1, 1, 1, NOW(), NOW(),
+    13.50, 18.00, 1, 35.00, 30.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_labodega AND nombre = 'Vinos y Espumantes' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_labodega AND nombre = 'Concha y Toro' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_labodega AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_labodega AND sku = 'LB-VIN-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_labodega, 'LB-SNK-001', 'Papitas Lay''s Clásica 200g', 'papitas-lays-clasica-200g',
     'Papas fritas sabor clásico en bolsa de 200g. Acompañamiento perfecto.',
-    NULL, 18.00, 1, 1, 1, NOW(), NOW(),
+    NULL, 18.00, 1, 8.00, 7.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_labodega AND nombre = 'Snacks y Piqueos' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_labodega AND nombre = 'Lay''s' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_labodega AND codigo = 'PAQ' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_labodega AND sku = 'LB-SNK-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_labodega, 'LB-GAS-001', 'Coca-Cola 1.5L', 'coca-cola-1-5l',
     'Gaseosa Coca-Cola botella de 1.5 litros. Ideal para mezclar o acompañar.',
-    NULL, 18.00, 1, 1, 1, NOW(), NOW(),
+    NULL, 18.00, 1, 6.00, 5.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_labodega AND nombre = 'Gaseosas y Bebidas' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_labodega AND nombre = 'Coca-Cola' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_labodega AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_labodega AND sku = 'LB-GAS-001');
 
 -- ── EL IMPERIO ──
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_elimperio, 'EI-RON-001', 'Ron Cartavio Black 750ml', 'ron-cartavio-black-750ml',
     'Ron negro peruano de 750ml con 40° de grado alcohólico. Ideal para cócteles y consumo directo.',
-    40.00, 18.00, 1, 1, 1, NOW(), NOW(),
+    40.00, 18.00, 1, 45.00, 40.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_elimperio AND nombre = 'Rones' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_elimperio AND nombre = 'Cartavio' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_elimperio AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_elimperio AND sku = 'EI-RON-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_elimperio, 'EI-CER-001', 'Cerveza Pilsen Callao 630ml', 'cerveza-pilsen-callao-630ml',
     'Cerveza lager peruana de 630ml con 5° de grado alcohólico. La cerveza del Perú.',
-    5.00, 18.00, 1, 1, 1, NOW(), NOW(),
+    5.00, 18.00, 1, 7.00, 6.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_elimperio AND nombre = 'Cervezas' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_elimperio AND nombre = 'Pilsen' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_elimperio AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_elimperio AND sku = 'EI-CER-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_elimperio, 'EI-VIN-001', 'Vino Casillero del Diablo Cabernet 750ml', 'vino-casillero-diablo-cabernet-750ml',
     'Vino tinto chileno Cabernet Sauvignon de 750ml con 13.5° de grado alcohólico.',
-    13.50, 18.00, 1, 1, 1, NOW(), NOW(),
+    13.50, 18.00, 1, 35.00, 30.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_elimperio AND nombre = 'Vinos y Espumantes' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_elimperio AND nombre = 'Concha y Toro' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_elimperio AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_elimperio AND sku = 'EI-VIN-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_elimperio, 'EI-SNK-001', 'Papitas Lay''s Clásica 200g', 'papitas-lays-clasica-200g',
     'Papas fritas sabor clásico en bolsa de 200g. Acompañamiento perfecto.',
-    NULL, 18.00, 1, 1, 1, NOW(), NOW(),
+    NULL, 18.00, 1, 8.00, 7.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_elimperio AND nombre = 'Snacks y Piqueos' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_elimperio AND nombre = 'Lay''s' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_elimperio AND codigo = 'PAQ' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_elimperio AND sku = 'EI-SNK-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_elimperio, 'EI-GAS-001', 'Coca-Cola 1.5L', 'coca-cola-1-5l',
     'Gaseosa Coca-Cola botella de 1.5 litros. Ideal para mezclar o acompañar.',
-    NULL, 18.00, 1, 1, 1, NOW(), NOW(),
+    NULL, 18.00, 1, 6.00, 5.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_elimperio AND nombre = 'Gaseosas y Bebidas' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_elimperio AND nombre = 'Coca-Cola' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_elimperio AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_elimperio AND sku = 'EI-GAS-001');
 
 -- ── PREMIUM WINES ──
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_premium, 'PW-RON-001', 'Ron Cartavio Black 750ml', 'ron-cartavio-black-750ml',
     'Ron negro peruano de 750ml con 40° de grado alcohólico. Ideal para cócteles y consumo directo.',
-    40.00, 18.00, 1, 1, 1, NOW(), NOW(),
+    40.00, 18.00, 1, 45.00, 40.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_premium AND nombre = 'Rones' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_premium AND nombre = 'Cartavio' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_premium AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_premium AND sku = 'PW-RON-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_premium, 'PW-CER-001', 'Cerveza Pilsen Callao 630ml', 'cerveza-pilsen-callao-630ml',
     'Cerveza lager peruana de 630ml con 5° de grado alcohólico. La cerveza del Perú.',
-    5.00, 18.00, 1, 1, 1, NOW(), NOW(),
+    5.00, 18.00, 1, 7.00, 6.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_premium AND nombre = 'Cervezas' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_premium AND nombre = 'Pilsen' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_premium AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_premium AND sku = 'PW-CER-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_premium, 'PW-VIN-001', 'Vino Casillero del Diablo Cabernet 750ml', 'vino-casillero-diablo-cabernet-750ml',
     'Vino tinto chileno Cabernet Sauvignon de 750ml con 13.5° de grado alcohólico.',
-    13.50, 18.00, 1, 1, 1, NOW(), NOW(),
+    13.50, 18.00, 1, 35.00, 30.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_premium AND nombre = 'Vinos y Espumantes' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_premium AND nombre = 'Concha y Toro' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_premium AND codigo = 'BOT' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_premium AND sku = 'PW-VIN-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_premium, 'PW-SNK-001', 'Papitas Lay''s Clásica 200g', 'papitas-lays-clasica-200g',
     'Papas fritas sabor clásico en bolsa de 200g. Acompañamiento perfecto.',
-    NULL, 18.00, 1, 1, 1, NOW(), NOW(),
+    NULL, 18.00, 1, 8.00, 7.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_premium AND nombre = 'Snacks y Piqueos' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_premium AND nombre = 'Lay''s' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_premium AND codigo = 'PAQ' LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_premium AND sku = 'PW-SNK-001');
 
-INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, permite_descuento, esta_activo, creado_en, actualizado_en,
+INSERT INTO productos (negocio_id, sku, nombre, slug, descripcion, grado_alcoholico, tasa_impuesto, impuesto_incluido, precio_venta, precio_venta_minimo, permite_descuento, esta_activo, creado_en, actualizado_en,
     categoria_id, marca_id, unidad_medida_id)
 SELECT @n_premium, 'PW-GAS-001', 'Coca-Cola 1.5L', 'coca-cola-1-5l',
     'Gaseosa Coca-Cola botella de 1.5 litros. Ideal para mezclar o acompañar.',
-    NULL, 18.00, 1, 1, 1, NOW(), NOW(),
+    NULL, 18.00, 1, 6.00, 5.00, 1, 1, NOW(), NOW(),
     (SELECT id FROM categorias WHERE negocio_id = @n_premium AND nombre = 'Gaseosas y Bebidas' LIMIT 1),
     (SELECT id FROM marcas WHERE negocio_id = @n_premium AND nombre = 'Coca-Cola' LIMIT 1),
     (SELECT id FROM unidades_medida WHERE negocio_id = @n_premium AND codigo = 'BOT' LIMIT 1)
