@@ -509,58 +509,60 @@ WHERE NOT EXISTS (SELECT 1 FROM productos WHERE negocio_id = @n_premium AND sku 
 -- ║  Combo 2: "Combo Ron + Gaseosa"                             ║
 -- ║    → 1x Ron Cartavio + 2x Coca-Cola                        ║
 -- ║    → Regular: S/57.00  |  Combo: S/49.90 (12% desc.)       ║
+-- ║                                                              ║
+-- ║  Vigencia: 2026-03-01 → 2026-06-30 (todos los combos)       ║
 -- ╚══════════════════════════════════════════════════════════════╝
 
 -- ── DON PEPE ──
-INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
+INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, fecha_inicio, fecha_fin, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
 SELECT @n_donpepe, 'Pack Parrillero', 'dp-pack-parrillero',
     '2 Cervezas Pilsen Callao 630ml + 1 Papitas Lay''s 200g. El combo perfecto para la parrilla.',
-    22.00, 18.90, 14.09, 1, 1, 1, 1, NOW(), NOW()
+    22.00, 18.90, 14.09, '2026-03-01', '2026-06-30', 1, 1, 1, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM combos WHERE slug = 'dp-pack-parrillero');
 
-INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
+INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, fecha_inicio, fecha_fin, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
 SELECT @n_donpepe, 'Combo Ron + Gaseosa', 'dp-combo-ron-gaseosa',
     '1 Ron Cartavio Black 750ml + 2 Coca-Cola 1.5L. Listo para la reunión.',
-    57.00, 49.90, 12.46, 1, 1, 0, 1, NOW(), NOW()
+    57.00, 49.90, 12.46, '2026-03-01', '2026-06-30', 1, 1, 0, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM combos WHERE slug = 'dp-combo-ron-gaseosa');
 
 -- ── LA BODEGA ──
-INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
+INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, fecha_inicio, fecha_fin, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
 SELECT @n_labodega, 'Pack Parrillero', 'lb-pack-parrillero',
     '2 Cervezas Pilsen Callao 630ml + 1 Papitas Lay''s 200g. El combo perfecto para la parrilla.',
-    22.00, 18.90, 14.09, 1, 1, 1, 1, NOW(), NOW()
+    22.00, 18.90, 14.09, '2026-03-01', '2026-06-30', 1, 1, 1, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM combos WHERE slug = 'lb-pack-parrillero');
 
-INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
+INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, fecha_inicio, fecha_fin, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
 SELECT @n_labodega, 'Combo Ron + Gaseosa', 'lb-combo-ron-gaseosa',
     '1 Ron Cartavio Black 750ml + 2 Coca-Cola 1.5L. Listo para la reunión.',
-    57.00, 49.90, 12.46, 1, 1, 0, 1, NOW(), NOW()
+    57.00, 49.90, 12.46, '2026-03-01', '2026-06-30', 1, 1, 0, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM combos WHERE slug = 'lb-combo-ron-gaseosa');
 
 -- ── EL IMPERIO ──
-INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
+INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, fecha_inicio, fecha_fin, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
 SELECT @n_elimperio, 'Pack Parrillero', 'ei-pack-parrillero',
     '2 Cervezas Pilsen Callao 630ml + 1 Papitas Lay''s 200g. El combo perfecto para la parrilla.',
-    22.00, 18.90, 14.09, 1, 1, 1, 1, NOW(), NOW()
+    22.00, 18.90, 14.09, '2026-03-01', '2026-06-30', 1, 1, 1, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM combos WHERE slug = 'ei-pack-parrillero');
 
-INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
+INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, fecha_inicio, fecha_fin, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
 SELECT @n_elimperio, 'Combo Ron + Gaseosa', 'ei-combo-ron-gaseosa',
     '1 Ron Cartavio Black 750ml + 2 Coca-Cola 1.5L. Listo para la reunión.',
-    57.00, 49.90, 12.46, 1, 1, 0, 1, NOW(), NOW()
+    57.00, 49.90, 12.46, '2026-03-01', '2026-06-30', 1, 1, 0, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM combos WHERE slug = 'ei-combo-ron-gaseosa');
 
 -- ── PREMIUM WINES ──
-INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
+INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, fecha_inicio, fecha_fin, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
 SELECT @n_premium, 'Pack Parrillero', 'pw-pack-parrillero',
     '2 Cervezas Pilsen Callao 630ml + 1 Papitas Lay''s 200g. El combo perfecto para la parrilla.',
-    22.00, 18.90, 14.09, 1, 1, 1, 1, NOW(), NOW()
+    22.00, 18.90, 14.09, '2026-03-01', '2026-06-30', 1, 1, 1, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM combos WHERE slug = 'pw-pack-parrillero');
 
-INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
+INSERT INTO combos (negocio_id, nombre, slug, descripcion, precio_regular, precio_combo, porcentaje_descuento, fecha_inicio, fecha_fin, visible_pos, visible_tienda_online, es_destacado, esta_activo, creado_en, actualizado_en)
 SELECT @n_premium, 'Combo Ron + Gaseosa', 'pw-combo-ron-gaseosa',
     '1 Ron Cartavio Black 750ml + 2 Coca-Cola 1.5L. Listo para la reunión.',
-    57.00, 49.90, 12.46, 1, 1, 0, 1, NOW(), NOW()
+    57.00, 49.90, 12.46, '2026-03-01', '2026-06-30', 1, 1, 0, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM combos WHERE slug = 'pw-combo-ron-gaseosa');
 
 
