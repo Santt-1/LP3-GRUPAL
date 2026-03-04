@@ -9,7 +9,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { Printer, X, Download, Loader2 } from 'lucide-react';
 import { ventasService } from '@/admin/ventas/services/ventasService';
-import { facturacionService } from '../services/facturacionService';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { formatCurrency } from '@/shared/utils/formatters';
 
@@ -74,7 +73,7 @@ export const ComprobanteViewModal = ({ doc, onClose }) => {
         // Fetch metodos de pago for label lookup
         if (negocio?.id) {
           promises.push(
-            facturacionService.getMetodosPago(negocio.id).catch(() => []),
+            ventasService.getMetodosPago(negocio.id).catch(() => []),
           );
         } else {
           promises.push(Promise.resolve([]));
