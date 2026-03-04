@@ -115,9 +115,9 @@ public class PosService {
         Usuarios usuario = usuariosRepo.getReferenceById(request.getUsuarioId());
         SesionesCaja sesion = sesionesRepo.getReferenceById(request.getSesionCajaId());
 
-        // ── 3. Resolver almacén predeterminado del negocio ──
+        // ── 3. Resolver almacén predeterminado de la sede ──
         Almacenes almacenDefault = almacenesRepo
-                .findByNegocio_IdAndEsPredeterminado(request.getNegocioId(), true)
+                .findFirstBySede_IdAndEsPredeterminado(request.getSedeId(), true)
                 .orElse(null);
 
         // ── 4. Validar stock de cada ítem ──
@@ -125,8 +125,8 @@ public class PosService {
             validarStockItems(request.getItems(), almacenDefault.getId(), request.getNegocioId());
         }
 
-        // ── 5. Generar número de venta ──
-        long count = ventasRepo.countByNegocioId(request.getNegocioId());
+        // ── 5. Generar número de venta (secuencia propia por sede para evitar duplicados) ──
+        long count = ventasRepo.countBySedeId(request.getSedeId());
         String fechaStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String numeroVenta = "VTA-" + fechaStr + "-" + String.format("%04d", count + 1);
 
@@ -677,7 +677,7 @@ public class PosService {
         if (detalles.isEmpty()) return;
 
         Almacenes almacenDefault = almacenesRepo
-                .findByNegocio_IdAndEsPredeterminado(venta.getNegocio().getId(), true)
+                .findFirstBySede_IdAndEsPredeterminado(venta.getSede().getId(), true)
                 .orElse(null);
         if (almacenDefault == null) return;
 
