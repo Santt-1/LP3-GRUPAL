@@ -11,6 +11,7 @@ import { Facturacion } from '../pages/Facturacion';
 import { Reportes } from '../pages/Reportes';
 import { MiPerfil } from '../pages/MiPerfil';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
+import { useAuthStore } from '@/stores/authStore';
 
 /* ─── Catálogo sub-páginas ─── */
 import { ProductosTab } from '../catalogo/components/tabs/ProductosTab';
@@ -53,7 +54,13 @@ import { OperacionesPage } from '../configuracion/components/tabs/OperacionesPag
 
 const ProtectedRoute = ({ children }) => {
   const { token, negocio, esProgramador } = useAdminAuthStore();
+  const esProgramadorSuperadmin = useAuthStore((s) => s.esProgramador());
+
   if (!token) {
+    // Si tiene sesión de superadmin como programador, vuelve a elegir negocio
+    if (esProgramadorSuperadmin) {
+      return <Navigate to="/superadmin/programador/negocios" replace />;
+    }
     return <Navigate to="/admin/login" replace />;
   }
   // Los programadores pueden acceder aunque el negocio no sea 'activo' (son pruebas)
