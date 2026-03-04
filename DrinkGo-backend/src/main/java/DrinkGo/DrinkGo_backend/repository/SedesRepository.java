@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import DrinkGo.DrinkGo_backend.entity.Sedes;
 
 public interface SedesRepository extends JpaRepository<Sedes, Long> {
+
     @Query(value = "SELECT * FROM sedes WHERE negocio_id = ?1 AND esta_activo = 1", nativeQuery = true)
     java.util.List<Sedes> findByNegocioId(Long negocioId);
 
