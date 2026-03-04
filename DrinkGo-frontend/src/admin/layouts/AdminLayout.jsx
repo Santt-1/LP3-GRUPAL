@@ -201,14 +201,14 @@ export const AdminLayout = () => {
   /** Solo para programadores: vuelve a la selección de negocio sin cerrar la sesión superadmin */
   const handleVolver = () => {
     logout(); // limpia adminAuthStore
-    navigate('/superadmin/programador/negocios', { replace: true });
+    window.location.replace('/superadmin/programador/negocios');
   };
 
   /** Cerrar sesión completa para programadores */
   const handleLogoutProgramador = () => {
     logout();
     superadminLogout();
-    navigate('/superadmin/login', { replace: true });
+    window.location.replace('/superadmin/login');
   };
 
   const SidebarContent = () => (
@@ -377,7 +377,7 @@ export const AdminLayout = () => {
               </span>
             </button>
             <button
-              onClick={handleLogout}
+              onClick={esProgramador ? handleLogoutProgramador : handleLogout}
               className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
               title="Cerrar sesión"
             >
