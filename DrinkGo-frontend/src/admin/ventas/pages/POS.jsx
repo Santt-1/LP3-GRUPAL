@@ -6,7 +6,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Banknote, Power, ArrowDownUp, ShoppingBag, AlertCircle, LogIn } from 'lucide-react';
+import { Banknote, Power, ArrowDownUp, ShoppingBag, AlertCircle, LogIn, Settings, FileText } from 'lucide-react';
 import { Card } from '@/admin/components/ui/Card';
 import { Button } from '@/admin/components/ui/Button';
 import { Badge } from '@/admin/components/ui/Badge';
@@ -19,6 +19,7 @@ import { ComprobanteVenta } from '../components/ComprobanteVenta';
 import { useCartStore } from '../stores/cartStore';
 import { useSesionActiva, useResumenTurno, useMovimientos, useCategoriasGasto } from '../hooks/useCajas';
 import { useCrearVenta, useMetodosPago } from '../hooks/useVentas';
+import { useSeries } from '@/admin/facturacion/hooks/useFacturacion';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { formatCurrency, formatDateTime } from '@/shared/utils/formatters';
 
@@ -30,7 +31,8 @@ export const POS = () => {
   const { registrar: registrarMovimiento, isRegistrando } = useMovimientos(sesion?.id);
   const { categorias } = useCategoriasGasto();
   const { crearVenta, isCreating } = useCrearVenta();
-  const { metodosPago } = useMetodosPago();
+  const { metodosPago, isLoading: loadingMetodos } = useMetodosPago();
+  const { data: series = [], isLoading: loadingSeries } = useSeries(negocio?.id);
 
   const items = useCartStore((s) => s.items);
   const getTotal = useCartStore((s) => s.getTotal);
@@ -147,6 +149,11 @@ export const POS = () => {
     );
   }
 
+  /* ─── Validación de configuración requerida ─── */
+  const faltaMetodosPago = !loadingMetodos && metodosPago.length === 0;
+  const faltaSeries = !loadingSeries && series.length === 0;
+  const faltaConfiguracion = faltaMetodosPago || faltaSeries;
+
   const total = getTotal();
 
   return (
@@ -181,6 +188,59 @@ export const POS = () => {
           </Button>
         </div>
       </div>
+
+      {/* ─── Alerta de configuración pendiente ─── */}
+      {faltaConfiguracion && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+              <AlertCircle size={22} className="text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-amber-800 mb-1">
+                Configuración pendiente para realizar ventas
+              </h3>
+              <p className="text-sm text-amber-700 mb-3">
+                Antes de poder registrar ventas, necesitas configurar los siguientes elementos:
+              </p>
+              <div className="space-y-2">
+                {faltaMetodosPago && (
+                  <div className="flex items-center gap-2 text-sm text-amber-800">
+                    <Settings size={16} className="text-amber-600 shrink-0" />
+                    <span>
+                      <strong>Métodos de Pago:</strong> No hay métodos de pago configurados.
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/admin/configuracion')}
+                      className="ml-auto text-xs shrink-0"
+                    >
+                      Ir a Configuración
+                    </Button>
+                  </div>
+                )}
+                {faltaSeries && (
+                  <div className="flex items-center gap-2 text-sm text-amber-800">
+                    <FileText size={16} className="text-amber-600 shrink-0" />
+                    <span>
+                      <strong>Series de Comprobantes:</strong> No hay series configuradas para emitir comprobantes.
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/admin/facturacion/series')}
+                      className="ml-auto text-xs shrink-0"
+                    >
+                      Ir a Facturación
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* POS Layout: 2 columnas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -219,11 +279,18 @@ export const POS = () => {
               <Button
                 className="w-full py-3 text-base"
                 onClick={() => setShowPagoModal(true)}
-                disabled={items.length === 0}
+                disabled={items.length === 0 || faltaConfiguracion}
+                title={faltaConfiguracion ? 'Debe configurar métodos de pago y series de comprobantes antes de vender' : undefined}
               >
                 <Banknote size={20} className="mr-2" />
                 Cobrar {formatCurrency(total)}
               </Button>
+              {faltaConfiguracion && items.length > 0 && (
+                <p className="text-xs text-amber-600 mt-2 text-center flex items-center justify-center gap-1">
+                  <AlertCircle size={12} />
+                  Configure métodos de pago y series para poder cobrar
+                </p>
+              )}
             </div>
           </Card>
 

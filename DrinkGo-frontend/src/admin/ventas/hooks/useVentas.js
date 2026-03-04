@@ -146,7 +146,7 @@ export const useMetodosPago = () => {
     queryKey: ['metodos-pago-pos', negocioId],
     queryFn: () => ventasService.getMetodosPago(negocioId),
     enabled: !!negocioId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 30,
     retry: 3,
     retryDelay: 1000,
   });

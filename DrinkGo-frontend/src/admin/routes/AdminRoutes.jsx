@@ -6,6 +6,7 @@ import { Usuarios } from '../pages/Usuarios';
 import { ComprasPage } from '../pages/Compras';
 import { Ventas } from '../pages/Ventas';
 import { Pedidos } from '../pages/Pedidos';
+import { Devoluciones } from '../pages/Devoluciones';
 import { Facturacion } from '../pages/Facturacion';
 import { Reportes } from '../pages/Reportes';
 import { MiPerfil } from '../pages/MiPerfil';
@@ -114,6 +115,7 @@ export const AdminRoutes = () => {
           <Route path="gastos" element={<GastosPage />} />
         </Route>
         <Route path="pedidos" element={<Pedidos />} />
+        <Route path="devoluciones" element={<Devoluciones />} />
         <Route path="facturacion" element={<Facturacion />}>
           <Route index element={<Navigate to="comprobantes" replace />} />
           <Route path="comprobantes" element={<ComprobantesTab />} />

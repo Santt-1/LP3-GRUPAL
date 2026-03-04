@@ -25,6 +25,7 @@ export const useMetodosPago = (negocioId) => {
     mutationFn: metodosPagoService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['metodos-pago'] });
+      queryClient.invalidateQueries({ queryKey: ['metodos-pago-pos'] });
       message.success('Método de pago creado exitosamente');
     },
     onError: (err) => {
@@ -36,6 +37,7 @@ export const useMetodosPago = (negocioId) => {
     mutationFn: metodosPagoService.update,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['metodos-pago'] });
+      queryClient.invalidateQueries({ queryKey: ['metodos-pago-pos'] });
       message.success('Método de pago actualizado exitosamente');
     },
     onError: (err) => {
@@ -47,6 +49,7 @@ export const useMetodosPago = (negocioId) => {
     mutationFn: metodosPagoService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['metodos-pago'] });
+      queryClient.invalidateQueries({ queryKey: ['metodos-pago-pos'] });
       message.success('Método de pago eliminado exitosamente');
     },
     onError: (err) => {
