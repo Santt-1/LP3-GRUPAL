@@ -22,8 +22,9 @@ INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, icono, orden, e
 ('compras',        'Proveedores y Compras',  'Proveedores, órdenes y recepción de mercadería',  'Truck',           6,  1),
 ('ventas',         'Ventas / POS',           'Punto de venta, caja e historial de ventas',      'CreditCard',      7,  1),
 ('pedidos',        'Pedidos',                'Gestión de pedidos de clientes',                  'ShoppingCart',    8,  1),
-('facturacion',    'Facturación',            'Comprobantes, series y métodos de pago',          'ClipboardList',   9,  1),
-('reportes',       'Reportes',               'Reportes y análisis del negocio',                 'BarChart3',       10, 1);
+('devoluciones',   'Devoluciones',           'Gestión de devoluciones de clientes y proveedores','RotateCcw',       9,  1),
+('facturacion',    'Facturación',            'Comprobantes, series y métodos de pago',          'ClipboardList',   10, 1),
+('reportes',       'Reportes',               'Reportes y análisis del negocio',                 'BarChart3',       11, 1);
 
 -- ============================================================
 -- 2. SUBMÓDULOS
@@ -105,6 +106,15 @@ SELECT 'ventas.movimientos', 'Movimientos de Caja', 'Ingresos y egresos de caja'
 INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
 SELECT 'ventas.historial', 'Historial de Ventas', 'Historial de ventas realizadas',
     id, 'History', 4, 1 FROM modulos_sistema WHERE codigo = 'ventas';
+
+-- Submódulos de Devoluciones
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'devoluciones.clientes', 'Clientes', 'Devoluciones de clientes por ventas realizadas',
+    id, 'UserCircle', 1, 1 FROM modulos_sistema WHERE codigo = 'devoluciones';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'devoluciones.proveedores', 'Proveedores', 'Devoluciones a proveedores por mercadería recibida',
+    id, 'Truck', 2, 1 FROM modulos_sistema WHERE codigo = 'devoluciones';
 
 -- Submódulos de Facturación
 INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
