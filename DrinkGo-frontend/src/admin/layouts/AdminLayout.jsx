@@ -34,6 +34,7 @@ import {
   Zap,
   TrendingDown,
   MapPin,
+  RotateCcw,
 } from 'lucide-react';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
 
@@ -136,6 +137,12 @@ const NAV_ITEMS = [
     icon: ShoppingCart,
     label: 'Pedidos',
     permiso: 'm.pedidos',
+  },
+  {
+    to: '/admin/devoluciones',
+    icon: RotateCcw,
+    label: 'Devoluciones',
+    permiso: 'm.devoluciones',
   },
   {
     key: 'facturacion',
