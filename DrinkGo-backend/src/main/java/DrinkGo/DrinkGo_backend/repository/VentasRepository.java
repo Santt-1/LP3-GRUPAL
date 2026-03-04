@@ -14,4 +14,7 @@ public interface VentasRepository extends JpaRepository<Ventas, Long> {
 
     @Query("SELECT COUNT(v) FROM Ventas v WHERE v.negocio.id = :negocioId")
     long countByNegocioId(@Param("negocioId") Long negocioId);
+
+    @Query("SELECT COUNT(v) FROM Ventas v WHERE v.sede.id = :sedeId")
+    long countBySedeId(@Param("sedeId") Long sedeId);
 }

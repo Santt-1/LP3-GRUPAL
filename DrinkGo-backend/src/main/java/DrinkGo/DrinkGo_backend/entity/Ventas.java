@@ -7,7 +7,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ventas")
+@Table(name = "ventas", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_ventas_numero_sede", columnNames = { "numero_venta", "sede_id" })
+})
 @JsonPropertyOrder({ "id", "sedeId", "numeroVenta", "tipoVenta", "clienteId", "mesaId", "sesionCajaId",
         "subtotal", "montoDescuento", "montoImpuesto", "costoEnvio", "total", "estado", "vendedorId",
         "creadoEn", "actualizadoEn" })
@@ -25,7 +27,7 @@ public class Ventas {
     @JoinColumn(name = "sede_id", nullable = false)
     private Sedes sede;
 
-    @Column(name = "numero_venta", nullable = false, unique = true)
+    @Column(name = "numero_venta", nullable = false)
     private String numeroVenta;
 
     @Enumerated(EnumType.STRING)
