@@ -2,6 +2,7 @@ package DrinkGo.DrinkGo_backend.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import DrinkGo.DrinkGo_backend.dto.RecepcionOrdenRequest;
 import DrinkGo.DrinkGo_backend.entity.OrdenesCompra;
 import DrinkGo.DrinkGo_backend.service.IOrdenesCompraService;
 import java.util.List;
@@ -113,6 +114,34 @@ public class OrdenesCompraController {
             System.out.println("ERROR EN DELETE ORDENES-COMPRA/{ID}: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Recibe una orden de compra de forma transaccional.
+     * Crea los lotes de inventario, actualiza el stock con CPP automático
+     * y marca la orden como "recibida" — todo en una sola transacción.
+     *
+     * POST /restful/ordenes-compra/{id}/recibir
+     * Body: { "usuarioId": 1, "items": [{ "detalleId": 1, "cantidadRecibida": 10,
+     *          "numeroLote": "LOTE-001", "fechaVencimiento": "2027-01-01" }] }
+     */
+    @PostMapping("/ordenes-compra/{id}/recibir")
+    public ResponseEntity<?> recibirOrden(
+            @PathVariable("id") Long ordenId,
+            @RequestBody RecepcionOrdenRequest request) {
+        try {
+            OrdenesCompra orden = service.recibirOrden(ordenId, request);
+            return ResponseEntity.ok(orden);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Error de validación: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error de estado: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("ERROR EN POST ORDENES-COMPRA/{ID}/RECIBIR: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al procesar recepción: " + e.getMessage());
         }
     }
 }

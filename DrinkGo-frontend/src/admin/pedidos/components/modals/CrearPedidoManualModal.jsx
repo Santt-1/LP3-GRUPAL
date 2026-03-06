@@ -74,11 +74,17 @@ export function CrearPedidoManualModal({ isOpen, onClose, onPedidoCreado }) {
   const puedeGuardar = () => {
     if (!clienteSeleccionado) return false;
     if (items.length === 0) return false;
-    
+
+    // Bloquear si algún item excede el stock disponible
+    const hayStockExcedido = items.some(
+      item => item.stock !== null && item.stock !== undefined && item.cantidad > item.stock
+    );
+    if (hayStockExcedido) return false;
+
     if (tipoPedido === 'delivery') {
       if (!distrito || !direccion) return false;
       if (!deliveryInfo.zona) return false;
-      
+
       // Verificar monto mínimo
       const total = subtotal + (subtotal * 0.18) + deliveryInfo.costo;
       if (deliveryInfo.montoMinimo > 0 && total < deliveryInfo.montoMinimo) {
@@ -258,6 +264,7 @@ export function CrearPedidoManualModal({ isOpen, onClose, onPedidoCreado }) {
                 <SelectorProductos
                   items={items}
                   onItemsChange={setItems}
+                  negocioId={negocioId}
                 />
               </div>
               

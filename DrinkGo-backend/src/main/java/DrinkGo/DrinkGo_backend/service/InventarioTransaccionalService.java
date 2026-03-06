@@ -440,6 +440,90 @@ public class InventarioTransaccionalService {
         registrarSalida(negocioId, productoId, almacenId, cantidad, usuarioId, motivoMovimiento, referenciaDocumento);
     }
 
+    // ==================== MÉTODOS CON FALLBACK DE ALMACÉN ====================
+
+    /**
+     * Encuentra el almacén donde hay stock DISPONIBLE suficiente para el producto.
+     * Prioriza almacenPreferidoId; si no tiene suficiente disponible, busca en
+     * cualquier almacén del negocio.
+     */
+    private Long resolverAlmacenConStockDisponible(Long productoId, Long almacenPreferidoId,
+                                                    Long negocioId, BigDecimal cantidad) {
+        if (almacenPreferidoId != null) {
+            Optional<StockInventario> s = stockRepository.findFirstByProductoIdAndAlmacenId(productoId, almacenPreferidoId);
+            if (s.isPresent() && s.get().getCantidadDisponible().compareTo(cantidad) >= 0) {
+                return almacenPreferidoId;
+            }
+        }
+        if (negocioId != null) {
+            return stockRepository.findByProductoIdAndNegocioId(productoId, negocioId).stream()
+                .filter(s -> s.getCantidadDisponible().compareTo(cantidad) >= 0)
+                .map(s -> s.getAlmacen().getId())
+                .findFirst()
+                .orElse(null);
+        }
+        return null;
+    }
+
+    /**
+     * Encuentra el almacén donde hay RESERVA suficiente para el producto.
+     */
+    private Long resolverAlmacenConReserva(Long productoId, Long almacenPreferidoId,
+                                            Long negocioId, BigDecimal cantidad) {
+        if (almacenPreferidoId != null) {
+            Optional<StockInventario> s = stockRepository.findFirstByProductoIdAndAlmacenId(productoId, almacenPreferidoId);
+            if (s.isPresent() && s.get().getCantidadReservada().compareTo(cantidad) >= 0) {
+                return almacenPreferidoId;
+            }
+        }
+        if (negocioId != null) {
+            return stockRepository.findByProductoIdAndNegocioId(productoId, negocioId).stream()
+                .filter(s -> s.getCantidadReservada().compareTo(cantidad) >= 0)
+                .map(s -> s.getAlmacen().getId())
+                .findFirst()
+                .orElse(null);
+        }
+        return null;
+    }
+
+    /** Reserva stock buscando automáticamente el almacén correcto en el negocio. */
+    @Transactional
+    public void reservarStockConFallback(Long productoId, Long almacenPreferidoId,
+                                          Long negocioId, BigDecimal cantidad) {
+        Long almacenId = resolverAlmacenConStockDisponible(productoId, almacenPreferidoId, negocioId, cantidad);
+        if (almacenId == null) {
+            throw new IllegalArgumentException(
+                "No hay stock disponible para producto " + productoId + " en ningún almacén del negocio");
+        }
+        reservarStock(productoId, almacenId, cantidad);
+    }
+
+    /** Libera reserva buscando automáticamente el almacén correcto en el negocio. */
+    @Transactional
+    public void liberarReservaConFallback(Long productoId, Long almacenPreferidoId,
+                                           Long negocioId, BigDecimal cantidad) {
+        Long almacenId = resolverAlmacenConReserva(productoId, almacenPreferidoId, negocioId, cantidad);
+        if (almacenId == null) {
+            throw new IllegalArgumentException(
+                "No hay reserva para liberar para producto " + productoId);
+        }
+        liberarReserva(productoId, almacenId, cantidad);
+    }
+
+    /** Confirma salida buscando automáticamente el almacén correcto en el negocio. */
+    @Transactional
+    public void confirmarReservaYSalidaConFallback(Long negocioId, Long productoId, Long almacenPreferidoId,
+                                                    BigDecimal cantidad, Long usuarioId,
+                                                    String motivoMovimiento, String referenciaDocumento) {
+        Long almacenId = resolverAlmacenConReserva(productoId, almacenPreferidoId, negocioId, cantidad);
+        if (almacenId == null) {
+            throw new IllegalArgumentException(
+                "No hay reserva para confirmar para producto " + productoId);
+        }
+        confirmarReservaYSalida(negocioId, productoId, almacenId, cantidad, usuarioId,
+                                motivoMovimiento, referenciaDocumento);
+    }
+
     // ==================== MÉTODOS PRIVADOS DE SOPORTE ====================
 
     /**

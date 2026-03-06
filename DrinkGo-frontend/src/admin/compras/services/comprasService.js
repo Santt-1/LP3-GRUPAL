@@ -94,6 +94,20 @@ export const ordenesCompraService = {
     const { data } = await adminApi.delete(`/ordenes-compra/${id}`);
     return data;
   },
+  /**
+   * Recibe una orden de compra de forma transaccional en el backend.
+   * Crea los lotes, actualiza el stock con CPP y marca la orden como recibida.
+   * @param {number} ordenId
+   * @param {number} usuarioId
+   * @param {Array}  items  [{ detalleId, cantidadRecibida, numeroLote, fechaVencimiento }]
+   */
+  recibir: async (ordenId, usuarioId, items) => {
+    const { data } = await adminApi.post(`/ordenes-compra/${ordenId}/recibir`, {
+      usuarioId,
+      items,
+    });
+    return data;
+  },
 };
 
 /* ================================================================

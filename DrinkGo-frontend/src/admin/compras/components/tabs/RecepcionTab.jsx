@@ -12,7 +12,6 @@
  */
 import { useState, useMemo, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   Search,
   PackageCheck,
@@ -24,8 +23,6 @@ import {
 } from 'lucide-react';
 import { useOrdenesCompra } from '../../hooks/useOrdenesCompra';
 import { useDetalleOrdenesCompra } from '../../hooks/useDetalleOrdenesCompra';
-import { useLotesInventario } from '@/admin/inventario/hooks/useLotesInventario';
-import { useStockInventario } from '@/admin/inventario/hooks/useStockInventario';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { formatCurrency, formatDateTime } from '@/shared/utils/formatters';
 import { message } from '@/shared/utils/notifications';
@@ -45,7 +42,6 @@ const ESTADO_MAP = {
 
 export const RecepcionTab = () => {
   const { negocioId } = useOutletContext();
-  const queryClient = useQueryClient();
 
   /* ─── State ─── */
   const [page, setPage] = useState(1);
@@ -62,19 +58,17 @@ export const RecepcionTab = () => {
     ordenes,
     isLoading,
     changeEstado,
+    recibirOrden,
+    isRecibiendo,
   } = useOrdenesCompra(negocioId);
 
   const {
     detalles,
     getDetallesForOrden,
     updateDetalle,
-    createDetalle,
   } = useDetalleOrdenesCompra(negocioId);
 
-  /* ─── Inventario hooks ─── */
-  const { createLote } = useLotesInventario(negocioId);
-  const { stock, createStock, updateStock } = useStockInventario(negocioId);
-  const { usuario } = useAdminAuthStore();
+  const { user: usuario } = useAdminAuthStore();
 
   /* ─── Solo pendientes ─── */
   const ordenesPendientes = useMemo(
@@ -202,131 +196,28 @@ export const RecepcionTab = () => {
       return;
     }
 
-    // Validar que todos los productos con cantidadRecibida > 0 tengan número de lote
-    const errores = [];
-    for (const detalle of ordenDetalles) {
-      const data = cantidades[detalle.id];
-      const cantRecibida = data?.cantidadRecibida ?? 0;
-      if (cantRecibida > 0 && !data?.numeroLote?.trim()) {
-        errores.push(`${detalle.producto?.nombre || 'Producto'}: falta número de lote`);
-      }
-    }
+    // Validar que al menos un item tenga cantidad recibida > 0
+    const items = ordenDetalles
+      .map((d) => ({
+        detalleId: d.id,
+        cantidadRecibida: cantidades[d.id]?.cantidadRecibida ?? 0,
+        numeroLote: cantidades[d.id]?.numeroLote?.trim() ?? '',
+        fechaVencimiento: cantidades[d.id]?.fechaVencimiento || null,
+      }))
+      .filter((i) => i.cantidadRecibida > 0);
 
-    if (errores.length > 0) {
-      message.error(`Por favor complete:\n${errores.join('\n')}`);
+    if (items.length === 0) {
+      message.warning('Ingrese al menos una cantidad recibida mayor a 0');
       return;
     }
 
-    setIsSaving(true);
     try {
-      // 1. Actualizar cantidades recibidas en los detalles
-      for (const detalle of ordenDetalles) {
-        const data = cantidades[detalle.id];
-        const cantidadRecibida = data?.cantidadRecibida ?? 0;
-        await updateDetalle({
-          id: detalle.id,
-          ordenCompra: { id: selectedOrden.id },
-          producto: detalle.producto ? { id: detalle.producto.id } : null,
-          cantidadSolicitada: detalle.cantidadSolicitada,
-          cantidadRecibida,
-          precioUnitario: detalle.precioUnitario,
-          subtotal: detalle.subtotal,
-          impuesto: detalle.impuesto,
-          total: detalle.total,
-          estaActivo: detalle.estaActivo,
-        });
-      }
-
-      // 2. Crear lotes y sincronizar stock para productos recibidos
-      for (const detalle of ordenDetalles) {
-        const data = cantidades[detalle.id];
-        const cantRecibida = data?.cantidadRecibida ?? 0;
-        
-        if (cantRecibida > 0 && detalle.producto) {
-          // Crear lote en inventario
-          const loteData = {
-            negocio: { id: negocioId },
-            producto: { id: detalle.producto.id },
-            almacen: { id: selectedOrden.almacen.id },
-            numeroLote: data.numeroLote.trim(),
-            fechaIngreso: new Date().toISOString().split('T')[0],
-            fechaVencimiento: data.fechaVencimiento || null,
-            cantidadInicial: cantRecibida,
-            cantidadActual: cantRecibida,
-            costoUnitario: detalle.precioUnitario,
-          };
-
-          // Solo agregar creadoPor si tenemos el usuario
-          if (usuario?.id) {
-            loteData.creadoPor = { id: usuario.id };
-          }
-
-          await createLote(loteData);
-
-          // Sincronizar stock: buscar si existe registro para producto+almacén
-          const stockExistente = stock.find(
-            (s) => s.producto?.id === detalle.producto.id && 
-                   s.almacen?.id === selectedOrden.almacen.id
-          );
-
-          const costoUnitario = Number(detalle.precioUnitario);
-
-          if (stockExistente) {
-            // Actualizar stock existente (recalcular costo promedio)
-            const cantidadAnterior = Number(stockExistente.cantidadActual || 0);
-            const costoAnterior = Number(stockExistente.costoPromedio || 0);
-            const nuevaCantidad = cantidadAnterior + cantRecibida;
-            const nuevoCostoPromedio = (
-              (cantidadAnterior * costoAnterior + cantRecibida * costoUnitario) /
-              nuevaCantidad
-            );
-
-            await updateStock({
-              id: stockExistente.id,
-              negocio: { id: negocioId },
-              producto: { id: detalle.producto.id },
-              almacen: { id: selectedOrden.almacen.id },
-              cantidadActual: nuevaCantidad,
-              cantidadDisponible: nuevaCantidad,
-              cantidadReservada: Number(stockExistente.cantidadReservada || 0),
-              costoPromedio: nuevoCostoPromedio,
-            });
-          } else {
-            // Crear nuevo registro de stock
-            await createStock({
-              negocio: { id: negocioId },
-              producto: { id: detalle.producto.id },
-              almacen: { id: selectedOrden.almacen.id },
-              cantidadActual: cantRecibida,
-              cantidadDisponible: cantRecibida,
-              cantidadReservada: 0,
-              costoPromedio: costoUnitario,
-            });
-          }
-        }
-      }
-
-      // 3. Marcar orden como recibida
-      await changeEstado({
-        orden: selectedOrden,
-        nuevoEstado: 'recibida',
-      });
-
-      // 4. Invalidar todas las queries relacionadas para refrescar la UI
-      await queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
-      await queryClient.invalidateQueries({ queryKey: ['detalle-ordenes-compra'] });
-      await queryClient.invalidateQueries({ queryKey: ['lotes-inventario'] });
-      await queryClient.invalidateQueries({ queryKey: ['stock-inventario'] });
-
-      message.success('Orden recibida, lotes creados y stock actualizado exitosamente');
+      await recibirOrden({ ordenId: selectedOrden.id, usuarioId: usuario?.id, items });
       setIsRecepcionOpen(false);
       setSelectedOrden(null);
       setCantidades({});
-    } catch (err) {
-      console.error('Error al procesar recepción:', err);
-      message.error(err.response?.data?.message || 'Error al marcar la orden como recibida');
-    } finally {
-      setIsSaving(false);
+    } catch {
+      // el hook ya mostró el mensaje de error
     }
   };
 
@@ -618,11 +509,11 @@ export const RecepcionTab = () => {
                   </Button>
                   <Button
                     onClick={handleMarcarRecibida}
-                    disabled={isSaving}
+                    disabled={isRecibiendo || isSaving}
                     className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-[11px] px-3 py-1.5"
                   >
                     <PackageCheck size={13} />
-                    {isSaving ? 'Procesando...' : 'Marcar recibida'}
+                    {isRecibiendo ? 'Procesando...' : 'Marcar recibida'}
                   </Button>
                 </>
               )}

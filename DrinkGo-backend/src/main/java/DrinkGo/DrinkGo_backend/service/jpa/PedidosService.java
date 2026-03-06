@@ -1,5 +1,6 @@
 package DrinkGo.DrinkGo_backend.service.jpa;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,15 +9,24 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import DrinkGo.DrinkGo_backend.entity.Almacenes;
 import DrinkGo.DrinkGo_backend.entity.DetallePedidos;
 import DrinkGo.DrinkGo_backend.entity.Pedidos;
+import DrinkGo.DrinkGo_backend.repository.AlmacenesRepository;
 import DrinkGo.DrinkGo_backend.repository.PedidosRepository;
 import DrinkGo.DrinkGo_backend.service.IPedidosService;
+import DrinkGo.DrinkGo_backend.service.InventarioTransaccionalService;
 
 @Service
 public class PedidosService implements IPedidosService {
     @Autowired
     private PedidosRepository repoPedidos;
+
+    @Autowired
+    private InventarioTransaccionalService inventarioService;
+
+    @Autowired
+    private AlmacenesRepository almacenesRepo;
 
     @Transactional(readOnly = true)
     public List<Pedidos> buscarTodos() {
@@ -80,6 +90,44 @@ public class PedidosService implements IPedidosService {
             pedidos.setNumeroPedido(generarNumeroPedido());
         }
         repoPedidos.save(pedidos);
+
+        // ✅ Reservar stock para cada producto del pedido
+        reservarStockParaPedido(pedidos);
+    }
+
+    /**
+     * Reserva stock en el almacén predeterminado de la sede del pedido.
+     * Si no hay almacén configurado o no existe registro de stock, registra un
+     * aviso pero NO interrumpe la creación del pedido.
+     */
+    private void reservarStockParaPedido(Pedidos pedido) {
+        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) return;
+
+        Long negocioId = pedido.getNegocio() != null ? pedido.getNegocio().getId() : null;
+        Long almacenPreferidoId = null;
+        if (pedido.getSede() != null) {
+            almacenPreferidoId = almacenesRepo
+                .findFirstBySede_IdAndEsPredeterminado(pedido.getSede().getId(), true)
+                .map(Almacenes::getId)
+                .orElse(null);
+        }
+
+        if (negocioId == null && almacenPreferidoId == null) {
+            System.err.println("⚠️ Pedido " + pedido.getNumeroPedido() + " sin negocio ni sede — stock no reservado.");
+            return;
+        }
+
+        for (DetallePedidos detalle : pedido.getDetalles()) {
+            if (detalle.getProducto() == null) continue;
+            Long productoId = detalle.getProducto().getId();
+            BigDecimal cantidad = detalle.getCantidad();
+            try {
+                inventarioService.reservarStockConFallback(productoId, almacenPreferidoId, negocioId, cantidad);
+                System.out.println("✅ Stock reservado — producto " + productoId + " x" + cantidad);
+            } catch (Exception e) {
+                System.err.println("⚠️ No se pudo reservar stock para producto " + productoId + ": " + e.getMessage());
+            }
+        }
     }
     
     /**
@@ -108,7 +156,91 @@ public class PedidosService implements IPedidosService {
     }
 
     public void modificar(Pedidos pedidos) {
+        // Detectar cambio de estado para manejar reservas de stock
+        repoPedidos.findById(pedidos.getId()).ifPresent(anterior -> {
+            Pedidos.EstadoPedido estadoAnterior = anterior.getEstadoPedido();
+            Pedidos.EstadoPedido estadoNuevo = pedidos.getEstadoPedido();
+
+            if (estadoAnterior != null && estadoNuevo != null && !estadoAnterior.equals(estadoNuevo)) {
+                if (estadoNuevo == Pedidos.EstadoPedido.cancelado) {
+                    // Liberar toda la reserva de stock
+                    liberarStockParaPedido(anterior);
+                } else if (estadoNuevo == Pedidos.EstadoPedido.entregado
+                        && estadoAnterior != Pedidos.EstadoPedido.entregado) {
+                    // Confirmar salida definitiva del inventario
+                    confirmarSalidaStockParaPedido(anterior);
+                }
+            }
+        });
         repoPedidos.save(pedidos);
+    }
+
+    /**
+     * Libera la reserva de stock cuando un pedido se cancela.
+     */
+    private void liberarStockParaPedido(Pedidos pedido) {
+        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) return;
+
+        Long negocioId = pedido.getNegocio() != null ? pedido.getNegocio().getId() : null;
+        Long almacenPreferidoId = null;
+        if (pedido.getSede() != null) {
+            almacenPreferidoId = almacenesRepo
+                .findFirstBySede_IdAndEsPredeterminado(pedido.getSede().getId(), true)
+                .map(Almacenes::getId)
+                .orElse(null);
+        }
+
+        for (DetallePedidos detalle : pedido.getDetalles()) {
+            if (detalle.getProducto() == null) continue;
+            Long productoId = detalle.getProducto().getId();
+            BigDecimal cantidad = detalle.getCantidad();
+            try {
+                inventarioService.liberarReservaConFallback(productoId, almacenPreferidoId, negocioId, cantidad);
+                System.out.println("✅ Reserva liberada — producto " + productoId + " x" + cantidad);
+            } catch (Exception e) {
+                System.err.println("⚠️ No se pudo liberar reserva para producto " + productoId + ": " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Reducción física del stock cuando el pedido es marcado como entregado.
+     * Descuenta cantidadActual y cantidadReservada (la reserva se convierte en salida real).
+     */
+    private void confirmarSalidaStockParaPedido(Pedidos pedido) {
+        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) return;
+
+        Long negocioId = pedido.getNegocio() != null ? pedido.getNegocio().getId() : null;
+        Long usuarioId = pedido.getUsuario() != null ? pedido.getUsuario().getId() : null;
+
+        if (negocioId == null || usuarioId == null) {
+            liberarStockParaPedido(pedido);
+            return;
+        }
+
+        Long almacenPreferidoId = null;
+        if (pedido.getSede() != null) {
+            almacenPreferidoId = almacenesRepo
+                .findFirstBySede_IdAndEsPredeterminado(pedido.getSede().getId(), true)
+                .map(Almacenes::getId)
+                .orElse(null);
+        }
+
+        for (DetallePedidos detalle : pedido.getDetalles()) {
+            if (detalle.getProducto() == null) continue;
+            Long productoId = detalle.getProducto().getId();
+            BigDecimal cantidad = detalle.getCantidad();
+            try {
+                inventarioService.confirmarReservaYSalidaConFallback(
+                    negocioId, productoId, almacenPreferidoId, cantidad, usuarioId,
+                    "Entrega pedido " + pedido.getNumeroPedido(),
+                    pedido.getNumeroPedido()
+                );
+                System.out.println("✅ Salida confirmada — producto " + productoId + " x" + cantidad);
+            } catch (Exception e) {
+                System.err.println("⚠️ No se pudo confirmar salida para producto " + productoId + ": " + e.getMessage());
+            }
+        }
     }
 
     @Transactional(readOnly = true)

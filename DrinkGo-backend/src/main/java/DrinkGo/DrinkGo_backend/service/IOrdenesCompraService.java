@@ -2,6 +2,7 @@ package DrinkGo.DrinkGo_backend.service;
 
 import java.util.List;
 import java.util.Optional;
+import DrinkGo.DrinkGo_backend.dto.RecepcionOrdenRequest;
 import DrinkGo.DrinkGo_backend.entity.OrdenesCompra;
 
 public interface IOrdenesCompraService {
@@ -10,4 +11,5 @@ public interface IOrdenesCompraService {
     void modificar(OrdenesCompra ordenesCompra);
     Optional<OrdenesCompra> buscarId(Long id);
     void eliminar(Long id);
+    OrdenesCompra recibirOrden(Long ordenId, RecepcionOrdenRequest request);
 }

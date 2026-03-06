@@ -175,6 +175,23 @@ export const useOrdenesCompra = (negocioId) => {
     },
   });
 
+  /* ─── Mutation: recibir orden (transaccional en backend) ─── */
+  const recibirOrden = useMutation({
+    mutationFn: ({ ordenId, usuarioId, items }) =>
+      ordenesCompraService.recibir(ordenId, usuarioId, items),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['detalle-ordenes-compra'] });
+      queryClient.invalidateQueries({ queryKey: ['lotes-inventario'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-inventario'] });
+      message.success('Orden recibida — lotes creados y stock actualizado');
+    },
+    onError: (err) => {
+      console.error('Error al recibir orden:', err.response?.data);
+      message.error(err.response?.data || err.response?.data?.message || 'Error al recibir la orden');
+    },
+  });
+
   /* ─── Mutation: eliminar orden de compra ─── */
   const deleteOrden = useMutation({
     mutationFn: ordenesCompraService.delete,
@@ -204,10 +221,12 @@ export const useOrdenesCompra = (negocioId) => {
     updateOrden: updateOrden.mutateAsync,
     changeEstado: changeEstado.mutateAsync,
     deleteOrden: deleteOrden.mutateAsync,
+    recibirOrden: recibirOrden.mutateAsync,
 
     isCreating: createOrdenWithDetalles.isPending,
     isUpdating: updateOrden.isPending,
     isChangingEstado: changeEstado.isPending,
     isDeleting: deleteOrden.isPending,
+    isRecibiendo: recibirOrden.isPending,
   };
 };

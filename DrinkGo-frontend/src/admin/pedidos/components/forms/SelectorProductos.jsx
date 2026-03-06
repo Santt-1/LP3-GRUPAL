@@ -3,32 +3,48 @@
  * Permite buscar y agregar productos al carrito
  */
 import { useState } from 'react';
-import { useBuscarProductos } from '@/admin/hooks/useProductos';
+import { useBuscarProductosConStock } from '@/admin/hooks/useProductos';
 import { useDebounce } from '@/shared/hooks/useDebounce';
-import { Search, Plus, Minus, Trash2, Package, Loader2 } from 'lucide-react';
+import { message } from '@/shared/utils/notifications';
+import { Search, Plus, Minus, Trash2, Package, Loader2, AlertTriangle } from 'lucide-react';
 
-export function SelectorProductos({ items = [], onItemsChange }) {
+export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
   const [busqueda, setBusqueda] = useState('');
-  
+
   const debouncedSearch = useDebounce(busqueda, 400);
-  const { data: productosEncontrados = [], isLoading: buscandoProductos } = 
-    useBuscarProductos(debouncedSearch, debouncedSearch.trim().length >= 2);
+  const { data: productosEncontrados = [], isLoading: buscandoProductos } =
+    useBuscarProductosConStock(negocioId, debouncedSearch, debouncedSearch.trim().length >= 2);
   
+  const stockDeProducto = (producto) => {
+    const s = producto.stock;
+    if (s === null || s === undefined) return null;
+    return typeof s === 'object' ? parseFloat(s) : Number(s);
+  };
+
   const agregarProducto = (producto) => {
+    const stockDisponible = stockDeProducto(producto);
+
     // Verificar si ya existe en el carrito
     const existente = items.find(item => item.productoId === producto.id);
-    
+
     if (existente) {
-      // Incrementar cantidad
+      const nuevaCantidad = existente.cantidad + 1;
+      if (existente.stock !== null && existente.stock !== undefined && nuevaCantidad > existente.stock) {
+        message.warning(`Stock insuficiente. Solo quedan ${existente.stock} unidades disponibles de "${existente.nombreProducto}".`);
+        return;
+      }
       onItemsChange(
         items.map(item =>
           item.productoId === producto.id
-            ? { ...item, cantidad: item.cantidad + 1 }
+            ? { ...item, cantidad: nuevaCantidad }
             : item
         )
       );
     } else {
-      // Agregar nuevo item
+      if (stockDisponible !== null && stockDisponible <= 0) {
+        message.warning(`"${producto.nombre}" no tiene stock disponible.`);
+        return;
+      }
       onItemsChange([
         ...items,
         {
@@ -37,11 +53,11 @@ export function SelectorProductos({ items = [], onItemsChange }) {
           skuProducto: producto.sku,
           cantidad: 1,
           precioUnitario: parseFloat(producto.precioVenta || 0),
-          stock: producto.stock,
+          stock: stockDisponible,
         },
       ]);
     }
-    
+
     setBusqueda('');
   };
   
@@ -50,12 +66,18 @@ export function SelectorProductos({ items = [], onItemsChange }) {
       eliminarProducto(productoId);
       return;
     }
-    
+
+    const item = items.find(i => i.productoId === productoId);
+    if (item?.stock !== null && item?.stock !== undefined && nuevaCantidad > item.stock) {
+      message.warning(`Stock insuficiente. Solo hay ${item.stock} unidades disponibles de "${item.nombreProducto}".`);
+      return;
+    }
+
     onItemsChange(
-      items.map(item =>
-        item.productoId === productoId
-          ? { ...item, cantidad: nuevaCantidad }
-          : item
+      items.map(i =>
+        i.productoId === productoId
+          ? { ...i, cantidad: nuevaCantidad }
+          : i
       )
     );
   };
@@ -159,13 +181,24 @@ export function SelectorProductos({ items = [], onItemsChange }) {
                   <p className="font-medium text-gray-900 truncate">
                     {item.nombreProducto}
                   </p>
-                  <div className="flex items-center gap-3 mt-1 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 flex-wrap">
                     <span>S/ {item.precioUnitario.toFixed(2)}</span>
-                    <span>• SKU: {item.skuProducto}</span>
+                    <span>•</span>
+                    <span>SKU: {item.skuProducto}</span>
                     {item.stock !== null && item.stock !== undefined && (
-                      <span className={item.cantidad > item.stock ? 'text-red-600 font-medium' : 'text-gray-500'}>
-                        • Stock: {item.stock}
-                      </span>
+                      <>
+                        <span>•</span>
+                        <span className={`inline-flex items-center gap-1 font-medium ${
+                          item.cantidad > item.stock
+                            ? 'text-red-600'
+                            : item.stock <= 5
+                              ? 'text-orange-500'
+                              : 'text-green-600'
+                        }`}>
+                          {item.cantidad > item.stock && <AlertTriangle className="w-3.5 h-3.5" />}
+                          Stock disponible: {item.stock}
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
@@ -191,7 +224,9 @@ export function SelectorProductos({ items = [], onItemsChange }) {
                   <button
                     type="button"
                     onClick={() => cambiarCantidad(item.productoId, item.cantidad + 1)}
-                    className="p-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    disabled={item.stock !== null && item.stock !== undefined && item.cantidad >= item.stock}
+                    className="p-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={item.stock !== null && item.cantidad >= item.stock ? `Stock máximo alcanzado (${item.stock})` : undefined}
                   >
                     <Plus className="w-4 h-4 text-gray-600" />
                   </button>
@@ -231,11 +266,12 @@ export function SelectorProductos({ items = [], onItemsChange }) {
         )}
       </div>
       
-      {/* Advertencias de stock */}
-      {items.some(item => item.stock !== null && item.cantidad > item.stock) && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-          <p className="text-sm text-yellow-800">
-            ⚠️ Algunos productos exceden el stock disponible
+      {/* Advertencia global de stock */}
+      {items.some(item => item.stock !== null && item.stock !== undefined && item.cantidad > item.stock) && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
+          <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-red-700">
+            <strong>Atención:</strong> hay productos que superan el stock disponible. Reduce las cantidades antes de guardar.
           </p>
         </div>
       )}

@@ -78,6 +78,28 @@ export const buscarProductos = async (termino) => {
 };
 
 /**
+ * Buscar productos con stock REAL (cantidadDisponible = actual - reservada)
+ * Usa el endpoint POS que enriquece cada producto con stock consolidado.
+ * @param {number} negocioId - ID del negocio
+ * @param {string} termino   - Término de búsqueda (nombre o SKU)
+ */
+export const buscarProductosConStock = async (negocioId, termino) => {
+  if (!negocioId) return [];
+  if (!termino || termino.trim().length < 2) return [];
+
+  const response = await adminApi.get(`/pos/productos/negocio/${negocioId}`);
+  const productos = response.data.map(mapProductoFromBackend);
+
+  const terminoBusqueda = termino.toLowerCase().trim();
+  return productos.filter(producto => {
+    const nombre = (producto.nombre || '').toLowerCase();
+    const sku = (producto.sku || '').toLowerCase();
+    return producto.estaActivo &&
+      (nombre.includes(terminoBusqueda) || sku.includes(terminoBusqueda));
+  });
+};
+
+/**
  * Obtener producto por ID
  * GET /restful/productos/:id
  */
