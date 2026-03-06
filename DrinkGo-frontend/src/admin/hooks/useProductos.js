@@ -6,6 +6,7 @@ import {
   getProductos,
   getProductosConStock,
   buscarProductos,
+  buscarProductosConStock,
   getProductoById,
   getProductosPorCategoria,
 } from '@/admin/services/productosApi';
@@ -42,6 +43,22 @@ export function useBuscarProductos(termino, enabled = true) {
     queryKey: ['productos-busqueda', termino],
     queryFn: () => buscarProductos(termino),
     enabled: enabled && termino && termino.trim().length >= 2,
+    staleTime: 30 * 1000, // 30 segundos
+  });
+}
+
+/**
+ * Hook para buscar productos por término (con stock real del inventario).
+ * Usa el endpoint POS que incluye cantidadDisponible como campo `stock`.
+ * @param {number} negocioId - ID del negocio
+ * @param {string} termino   - Término de búsqueda
+ * @param {boolean} enabled  - Si la búsqueda debe ejecutarse
+ */
+export function useBuscarProductosConStock(negocioId, termino, enabled = true) {
+  return useQuery({
+    queryKey: ['productos-busqueda-stock', negocioId, termino],
+    queryFn: () => buscarProductosConStock(negocioId, termino),
+    enabled: enabled && !!negocioId && termino && termino.trim().length >= 2,
     staleTime: 30 * 1000, // 30 segundos
   });
 }
