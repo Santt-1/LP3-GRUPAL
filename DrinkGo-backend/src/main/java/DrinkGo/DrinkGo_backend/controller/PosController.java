@@ -505,6 +505,24 @@ public class PosController {
         }
     }
 
+    @PostMapping("/movimientos/{id}/devolver")
+    public ResponseEntity<?> devolverEgreso(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        try {
+            java.math.BigDecimal monto = new java.math.BigDecimal(body.get("monto").toString());
+            String motivo = body.containsKey("motivo") && body.get("motivo") != null
+                    ? body.get("motivo").toString() : null;
+            MovimientosCaja devolucion = posService.devolverEgreso(id, monto, motivo);
+            return ResponseEntity.status(HttpStatus.CREATED).body(devolucion);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/movimientos/negocio/{negocioId}")
     public ResponseEntity<?> getMovimientosByNegocio(
             @PathVariable Long negocioId,
