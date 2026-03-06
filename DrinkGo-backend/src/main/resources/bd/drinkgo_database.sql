@@ -537,6 +537,7 @@ CREATE TABLE unidades_medida (
 CREATE TABLE productos (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     negocio_id BIGINT UNSIGNED NOT NULL,
+    sede_id BIGINT UNSIGNED NULL COMMENT 'Sede a la que pertenece el producto. NULL = visible en todas las sedes del negocio',
     sku VARCHAR(50) NOT NULL,
     nombre VARCHAR(250) NOT NULL,
     slug VARCHAR(250) NOT NULL,
@@ -568,12 +569,14 @@ CREATE TABLE productos (
     eliminado_en TIMESTAMP NULL,
 
     CONSTRAINT fk_prod_negocio FOREIGN KEY (negocio_id) REFERENCES negocios(id),
+    CONSTRAINT fk_prod_sede FOREIGN KEY (sede_id) REFERENCES sedes(id) ON DELETE SET NULL,
     CONSTRAINT fk_prod_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL,
     CONSTRAINT fk_prod_marca FOREIGN KEY (marca_id) REFERENCES marcas(id) ON DELETE SET NULL,
     CONSTRAINT fk_prod_umed FOREIGN KEY (unidad_medida_id) REFERENCES unidades_medida(id) ON DELETE SET NULL,
 
     UNIQUE KEY uk_prod_negocio_sku (negocio_id, sku),
     INDEX idx_prod_negocio (negocio_id),
+    INDEX idx_prod_sede (sede_id),
     INDEX idx_prod_categoria (categoria_id),
     INDEX idx_prod_marca (marca_id),
     INDEX idx_prod_activo (negocio_id, esta_activo),
