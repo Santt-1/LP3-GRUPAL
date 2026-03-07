@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import jakarta.persistence.Column;
@@ -25,7 +27,7 @@ import jakarta.persistence.Transient;
 @Table(name = "productos")
 @SQLDelete(sql = "UPDATE productos SET esta_activo = 0, eliminado_en = NOW() WHERE id = ?")
 @SQLRestriction("esta_activo = 1")
-@JsonPropertyOrder({ "id", "negocioId", "sku", "nombre", "slug", "descripcion",
+@JsonPropertyOrder({ "id", "negocioId", "sedeId", "sku", "nombre", "slug", "descripcion",
         "urlImagen", "categoriaId", "marcaId", "unidadMedidaId", "gradoAlcoholico",
         "precioVenta", "precioVentaMinimo", "precioCompra", "stock", "tasaImpuesto", "impuestoIncluido",
         "fechaVencimiento", "permiteDescuento", "estaActivo",
@@ -36,9 +38,25 @@ public class Productos {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "negocio_id", nullable = false)
     private Negocios negocio;
+
+    /** FK read-only — evita acceder al proxy lazy para serialización */
+    @Column(name = "negocio_id", insertable = false, updatable = false)
+    private Long negocioId;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sede_id")
+    private Sedes sede;
+
+    /** FK read-only — evita acceder al proxy lazy para serialización */
+    @Column(name = "sede_id", insertable = false, updatable = false)
+    private Long sedeId;
 
     @Column(nullable = false)
     private String sku;
@@ -133,6 +151,22 @@ public class Productos {
 
     public void setNegocio(Negocios negocio) {
         this.negocio = negocio;
+    }
+
+    public Long getNegocioId() {
+        return negocioId;
+    }
+
+    public Sedes getSede() {
+        return sede;
+    }
+
+    public void setSede(Sedes sede) {
+        this.sede = sede;
+    }
+
+    public Long getSedeId() {
+        return sedeId;
     }
 
     public String getSku() {
