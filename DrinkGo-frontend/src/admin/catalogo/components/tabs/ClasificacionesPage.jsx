@@ -7,19 +7,22 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { FolderTree, Award, Ruler } from 'lucide-react';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { CategoriasTab } from './CategoriasTab';
 import { MarcasTab } from './MarcasTab';
 import { UnidadesMedidaTab } from './UnidadesMedidaTab';
 
 const TABS = [
-  { key: 'categorias', label: 'Categorías', icon: FolderTree },
-  { key: 'marcas', label: 'Marcas', icon: Award },
-  { key: 'unidades', label: 'Unidades de Medida', icon: Ruler },
+  { key: 'categorias', label: 'Categorías',        icon: FolderTree, permiso: 'm.catalogo.clasificaciones.categorias' },
+  { key: 'marcas',     label: 'Marcas',            icon: Award,      permiso: 'm.catalogo.clasificaciones.marcas' },
+  { key: 'unidades',   label: 'Unidades de Medida', icon: Ruler,      permiso: 'm.catalogo.clasificaciones.unidades' },
 ];
 
 export const ClasificacionesPage = () => {
   const outletContext = useOutletContext();
-  const [activeTab, setActiveTab] = useState('categorias');
+  const hasPermiso = useAdminAuthStore((s) => s.hasPermiso);
+  const visibleTabs = TABS.filter((t) => hasPermiso(t.permiso));
+  const [activeTab, setActiveTab] = useState(() => visibleTabs[0]?.key ?? 'categorias');
 
   return (
     <div className="space-y-6">
@@ -34,7 +37,7 @@ export const ClasificacionesPage = () => {
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex gap-6" aria-label="Pestañas de clasificaciones">
-          {TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button

@@ -11,14 +11,16 @@ import { DevolucionesClientesTab } from '@/admin/devoluciones/components/tabs/De
 import { DevolucionesProveedoresTab } from '@/admin/devoluciones/components/tabs/DevolucionesProveedoresTab';
 
 const TABS = [
-  { key: 'clientes', label: 'Clientes', icon: User },
-  { key: 'proveedores', label: 'Proveedores', icon: Truck },
+  { key: 'clientes',    label: 'Clientes',    icon: User,  permiso: 'm.devoluciones.clientes' },
+  { key: 'proveedores', label: 'Proveedores', icon: Truck, permiso: 'm.devoluciones.proveedores' },
 ];
 
 export const Devoluciones = () => {
   const negocio = useAdminAuthStore((s) => s.negocio);
   const negocioId = negocio?.id;
-  const [activeTab, setActiveTab] = useState('clientes');
+  const hasPermiso = useAdminAuthStore((s) => s.hasPermiso);
+  const visibleTabs = TABS.filter((t) => hasPermiso(t.permiso));
+  const [activeTab, setActiveTab] = useState(() => visibleTabs[0]?.key ?? 'clientes');
 
   return (
     <div className="space-y-6">
@@ -31,7 +33,7 @@ export const Devoluciones = () => {
       {/* Pestañas */}
       <div className="border-b border-gray-200">
         <nav className="flex gap-1 -mb-px">
-          {TABS.map(({ key, label, icon: Icon }) => (
+          {visibleTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}

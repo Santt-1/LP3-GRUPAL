@@ -7,19 +7,22 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Building2, MapPin, Globe } from 'lucide-react';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { NegocioTab } from './NegocioTab';
 import { SedesTab } from './SedesTab';
 import { TiendaOnlineTab } from './TiendaOnlineTab';
 
 const TABS = [
-  { key: 'negocio', label: 'Mi Negocio', icon: Building2 },
-  { key: 'sedes', label: 'Sedes', icon: MapPin },
-  { key: 'tienda-online', label: 'Tienda Online', icon: Globe },
+  { key: 'negocio',       label: 'Mi Negocio',   icon: Building2, permiso: 'm.configuracion.negocio.negocio' },
+  { key: 'sedes',         label: 'Sedes',         icon: MapPin,    permiso: 'm.configuracion.negocio.sedes' },
+  { key: 'tienda-online', label: 'Tienda Online', icon: Globe,     permiso: 'm.configuracion.negocio.tienda-online' },
 ];
 
 export const NegocioYSedesPage = () => {
   const outletContext = useOutletContext();
-  const [activeTab, setActiveTab] = useState('negocio');
+  const hasPermiso = useAdminAuthStore((s) => s.hasPermiso);
+  const visibleTabs = TABS.filter((t) => hasPermiso(t.permiso));
+  const [activeTab, setActiveTab] = useState(() => visibleTabs[0]?.key ?? 'negocio');
 
   return (
     <div className="space-y-6">
@@ -34,7 +37,7 @@ export const NegocioYSedesPage = () => {
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex gap-6" aria-label="Pestañas de negocio y sedes">
-          {TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button
