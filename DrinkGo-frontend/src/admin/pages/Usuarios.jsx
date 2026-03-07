@@ -10,18 +10,21 @@
  */
 import { useState } from 'react';
 import { Users, UserCheck, Shield } from 'lucide-react';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { UsuariosTab } from '@/admin/usuarios/components/tabs/UsuariosTab';
 import { ClientesTab } from '@/admin/usuarios/components/tabs/ClientesTab';
 import { RolesTab } from '@/admin/usuarios/components/tabs/RolesTab';
 
 const TABS = [
-  { key: 'usuarios', label: 'Usuarios', icon: Users },
-  { key: 'clientes', label: 'Clientes', icon: UserCheck },
-  { key: 'roles', label: 'Roles', icon: Shield },
+  { key: 'usuarios', label: 'Usuarios', icon: Users,     permiso: 'm.usuarios.usuarios' },
+  { key: 'clientes', label: 'Clientes', icon: UserCheck, permiso: 'm.usuarios.clientes' },
+  { key: 'roles',    label: 'Roles',    icon: Shield,    permiso: 'm.usuarios.roles' },
 ];
 
 export const Usuarios = () => {
-  const [activeTab, setActiveTab] = useState('usuarios');
+  const hasPermiso = useAdminAuthStore((s) => s.hasPermiso);
+  const visibleTabs = TABS.filter((t) => hasPermiso(t.permiso));
+  const [activeTab, setActiveTab] = useState(() => visibleTabs[0]?.key ?? 'usuarios');
 
   return (
     <div className="space-y-6">
@@ -36,7 +39,7 @@ export const Usuarios = () => {
       {/* Tabs de navegación */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex gap-1">
-          {TABS.map(({ key, label, icon: Icon }) => (
+          {visibleTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}

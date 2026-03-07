@@ -13,7 +13,7 @@ public class PermisosSistema {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "modulo_id", nullable = false)
     private ModulosSistema modulo;
 
