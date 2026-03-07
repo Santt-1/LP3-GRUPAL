@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,7 +64,27 @@ public class StorefrontPublicController {
         if (config.isEmpty()) {
             return notFound(slug);
         }
-        return ResponseEntity.ok(config.get());
+        ConfiguracionTiendaOnline cfg = config.get();
+
+        // Build response manually to include negocio.urlLogo
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", cfg.getId());
+        response.put("slugTienda", cfg.getSlugTienda());
+        response.put("nombreTienda", cfg.getNombreTienda());
+        response.put("configVisual", cfg.getConfigVisual());
+        response.put("estaHabilitado", cfg.getEstaHabilitado());
+
+        if (cfg.getNegocio() != null) {
+            Map<String, Object> negocioMap = new HashMap<>();
+            negocioMap.put("id", cfg.getNegocio().getId());
+            negocioMap.put("razonSocial", cfg.getNegocio().getRazonSocial());
+            negocioMap.put("urlLogo", cfg.getNegocio().getUrlLogo());
+            negocioMap.put("telefono", cfg.getNegocio().getTelefono());
+            negocioMap.put("email", cfg.getNegocio().getEmail());
+            response.put("negocio", negocioMap);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     /*

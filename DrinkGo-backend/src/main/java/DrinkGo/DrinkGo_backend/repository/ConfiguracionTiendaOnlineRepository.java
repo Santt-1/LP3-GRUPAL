@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface ConfiguracionTiendaOnlineRepository extends JpaRepository<ConfiguracionTiendaOnline, Long> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "negocio" })
     Optional<ConfiguracionTiendaOnline> findBySlugTienda(String slugTienda);
 
 }

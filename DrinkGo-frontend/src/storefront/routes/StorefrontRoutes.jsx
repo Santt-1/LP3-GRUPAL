@@ -8,6 +8,8 @@ import { StorefrontCheckout } from '../pages/StorefrontCheckout';
 import { StorefrontLogin } from '../pages/StorefrontLogin';
 import { StorefrontRegister } from '../pages/StorefrontRegister';
 import { StorefrontOrders } from '../pages/StorefrontOrders';
+import { StorefrontProfile } from '../pages/StorefrontProfile';
+import { StorefrontDevoluciones } from '../pages/StorefrontDevoluciones';
 
 export const StorefrontRoutes = () => {
   return (
@@ -21,6 +23,8 @@ export const StorefrontRoutes = () => {
         <Route path="login" element={<StorefrontLogin />} />
         <Route path="registro" element={<StorefrontRegister />} />
         <Route path="mis-pedidos" element={<StorefrontOrders />} />
+        <Route path="mi-perfil" element={<StorefrontProfile />} />
+        <Route path="mis-devoluciones" element={<StorefrontDevoluciones />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

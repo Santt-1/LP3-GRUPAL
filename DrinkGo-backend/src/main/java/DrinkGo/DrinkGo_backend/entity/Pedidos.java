@@ -20,10 +20,11 @@ import java.util.List;
 @Table(name = "pedidos")
 @SQLDelete(sql = "UPDATE pedidos SET esta_activo = 0, eliminado_en = NOW() WHERE id = ?")
 @SQLRestriction("esta_activo = 1")
-@JsonPropertyOrder({ "id", "negocioId", "sedeId", "numeroPedido", "clienteId", "cliente", "ventaId", "tipoPedido", 
-        "origenPedido", "fechaPedido", "fechaEntregaEstimada", "direccionEntrega", "departamento", "provincia", 
+@JsonPropertyOrder({ "id", "negocioId", "sedeId", "numeroPedido", "clienteId", "cliente", "ventaId", "tipoPedido",
+        "origenPedido", "fechaPedido", "fechaEntregaEstimada", "direccionEntrega", "departamento", "provincia",
         "distrito", "referencia", "zonaDeliveryId", "subtotal", "descuento", "costoDelivery",
-        "impuestos", "total", "estadoPedido", "observaciones", "usuarioId", "detalles", "estaActivo", "creadoEn", "actualizadoEn",
+        "impuestos", "total", "estadoPedido", "observaciones", "usuarioId", "detalles", "estaActivo", "creadoEn",
+        "actualizadoEn",
         "eliminadoEn" })
 public class Pedidos {
 
@@ -37,7 +38,7 @@ public class Pedidos {
     private Negocios negocio;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sede_id", nullable = false)
+    @JoinColumn(name = "sede_id")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Sedes sede;
 
@@ -46,7 +47,7 @@ public class Pedidos {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Clientes cliente;
 
     @Enumerated(EnumType.STRING)
@@ -80,7 +81,7 @@ public class Pedidos {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "zona_delivery_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private ZonasDelivery zonaDelivery;
 
     @Column(precision = 10, scale = 2, nullable = false)
@@ -108,14 +109,26 @@ public class Pedidos {
     @Column(columnDefinition = "TEXT")
     private String observaciones;
 
+    @Column(name = "tipo_comprobante", length = 20)
+    private String tipoComprobante = "boleta";
+
+    @Column(name = "doc_cliente_numero", length = 20)
+    private String docClienteNumero;
+
+    @Column(name = "doc_cliente_nombre", length = 200)
+    private String docClienteNombre;
+
+    @Column(name = "doc_cliente_direccion", columnDefinition = "TEXT")
+    private String docClienteDireccion;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Usuarios usuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "venta_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Ventas venta;
 
     @Column(name = "esta_activo")
@@ -350,6 +363,38 @@ public class Pedidos {
 
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
+    }
+
+    public String getTipoComprobante() {
+        return tipoComprobante;
+    }
+
+    public void setTipoComprobante(String tipoComprobante) {
+        this.tipoComprobante = tipoComprobante;
+    }
+
+    public String getDocClienteNumero() {
+        return docClienteNumero;
+    }
+
+    public void setDocClienteNumero(String docClienteNumero) {
+        this.docClienteNumero = docClienteNumero;
+    }
+
+    public String getDocClienteNombre() {
+        return docClienteNombre;
+    }
+
+    public void setDocClienteNombre(String docClienteNombre) {
+        this.docClienteNombre = docClienteNombre;
+    }
+
+    public String getDocClienteDireccion() {
+        return docClienteDireccion;
+    }
+
+    public void setDocClienteDireccion(String docClienteDireccion) {
+        this.docClienteDireccion = docClienteDireccion;
     }
 
     public Usuarios getUsuario() {

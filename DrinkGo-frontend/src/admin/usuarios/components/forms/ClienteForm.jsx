@@ -69,6 +69,8 @@ export const ClienteForm = ({
       telefono: initialData?.telefono || '',
       fechaNacimiento: initialData?.fechaNacimiento || '',
       direccion: initialData?.direccion || '',
+      password: '',
+      confirmPassword: '',
     },
   });
 
@@ -193,6 +195,7 @@ export const ClienteForm = ({
       telefono: formData.telefono || null,
       fechaNacimiento: formData.fechaNacimiento || null,
       direccion: formData.direccion || null,
+      passwordHash: formData.password || null,
     };
 
     onSubmit(payload);
@@ -350,6 +353,42 @@ export const ClienteForm = ({
         error={errors.direccion?.message}
         placeholder="Av. Principal 123, Lima"
       />
+
+      {/* CONTRASEÑA (solo al crear) */}
+      {!isEdit && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              {...register('password')}
+              placeholder="Mínimo 6 caracteres"
+              autoComplete="new-password"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            {errors.password && (
+              <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirmar contraseña
+            </label>
+            <input
+              type="password"
+              {...register('confirmPassword')}
+              placeholder="Repite la contraseña"
+              autoComplete="new-password"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            {errors.confirmPassword && (
+              <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ACCIONES */}
       <div className="flex justify-end gap-2 pt-2">

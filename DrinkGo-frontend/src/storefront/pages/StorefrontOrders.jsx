@@ -9,6 +9,7 @@ import {
   ChevronRight,
   ShoppingBag,
   Loader2,
+  Receipt,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useStorefrontAuthStore } from '../stores/storefrontAuthStore';
@@ -109,6 +110,16 @@ export const StorefrontOrders = () => {
                       {pedido.detalles.length} producto{pedido.detalles.length !== 1 ? 's' : ''}
                     </span>
                   )}
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      pedido.tipoComprobante === 'factura'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    <Receipt size={12} />
+                    {pedido.tipoComprobante === 'factura' ? 'Factura' : 'Boleta'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-bold text-gray-900">
@@ -117,6 +128,20 @@ export const StorefrontOrders = () => {
                   <ChevronRight size={16} className="text-gray-400" />
                 </div>
               </div>
+
+              {/* Comprobante info */}
+              {(pedido.docClienteNombre || pedido.docClienteNumero) && (
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-500">
+                  <Receipt size={12} className="text-gray-400 shrink-0" />
+                  <span>
+                    {pedido.tipoComprobante === 'factura' ? 'RUC' : 'Doc'}:{' '}
+                    <span className="font-medium text-gray-700">{pedido.docClienteNumero}</span>
+                    {pedido.docClienteNombre && (
+                      <span className="ml-1">— {pedido.docClienteNombre}</span>
+                    )}
+                  </span>
+                </div>
+              )}
 
               {/* Brief detail list */}
               {pedido.detalles && pedido.detalles.length > 0 && (

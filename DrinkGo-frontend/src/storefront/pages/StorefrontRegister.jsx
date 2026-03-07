@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
-import { UserPlus, Loader2 } from 'lucide-react';
+import { UserPlus, Loader2, Search } from 'lucide-react';
 import { useStorefrontAuthStore } from '../stores/storefrontAuthStore';
 import { storefrontService } from '../services/storefrontService';
 import toast from 'react-hot-toast';
@@ -23,9 +23,40 @@ export const StorefrontRegister = () => {
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isBuscando, setIsBuscando] = useState(false);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleBuscarDoc = async () => {
+    if (form.tipoDocumento !== 'DNI') return;
+    if (form.numeroDocumento.length !== 8) {
+      toast.error('El DNI debe tener 8 dígitos');
+      return;
+    }
+    setIsBuscando(true);
+    try {
+      const data = await storefrontService.consultarDni(form.numeroDocumento);
+      const nombres = data.nombres || data.nombre || '';
+      const apellidos = [
+        data.apellido_paterno || '',
+        data.apellido_materno || '',
+      ]
+        .filter(Boolean)
+        .join(' ');
+      setForm((prev) => ({
+        ...prev,
+        nombres: nombres || prev.nombres,
+        apellidos: apellidos || prev.apellidos,
+      }));
+      if (nombres || apellidos) toast.success('Datos cargados del DNI');
+      else toast.error('No se encontraron datos para ese DNI');
+    } catch {
+      toast.error('No se pudo consultar el DNI');
+    } finally {
+      setIsBuscando(false);
+    }
   };
 
   const validate = () => {
@@ -49,6 +80,7 @@ export const StorefrontRegister = () => {
     if (!validate()) return;
 
     const payload = {
+      slug,
       tipoDocumento: form.tipoDocumento,
       numeroDocumento: form.numeroDocumento.trim(),
       nombres: form.nombres.trim(),
@@ -132,15 +164,28 @@ export const StorefrontRegister = () => {
               </div>
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nro. Documento <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  name="numeroDocumento"
-                  value={form.numeroDocumento}
-                  onChange={handleChange}
-                  placeholder={form.tipoDocumento === 'DNI' ? '72345678' : '001234567'}
-                  maxLength={form.tipoDocumento === 'DNI' ? 8 : 12}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="numeroDocumento"
+                    value={form.numeroDocumento}
+                    onChange={handleChange}
+                    placeholder={form.tipoDocumento === 'DNI' ? '72345678' : '001234567'}
+                    maxLength={form.tipoDocumento === 'DNI' ? 8 : 12}
+                    className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  {form.tipoDocumento === 'DNI' && (
+                    <button
+                      type="button"
+                      onClick={handleBuscarDoc}
+                      disabled={isBuscando || form.numeroDocumento.length !== 8}
+                      className="px-3 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded-xl transition-colors flex items-center gap-1 text-sm"
+                      title="Buscar datos del DNI"
+                    >
+                      {isBuscando ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 

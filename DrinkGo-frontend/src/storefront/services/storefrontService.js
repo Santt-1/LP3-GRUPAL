@@ -42,6 +42,15 @@ customerApi.interceptors.response.use(
 /* ── Helpers ── */
 const toArray = (d) => (Array.isArray(d) ? d : d?.content || []);
 
+/* ── URL helper para imágenes/logos ── */
+export const UPLOADS_BASE = (import.meta.env.VITE_API_BASE_URL || '/restful').replace('/restful', '');
+
+export const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/')) return path;
+  return `${UPLOADS_BASE}/${path}`;
+};
+
 /* ══════════════════════════════════════════════════════════
    NOTA PARA BACKEND:
    Los endpoints /tienda/public/* deben ser públicos (permitAll)
@@ -118,5 +127,33 @@ export const storefrontService = {
   getPedidoById: async (slug, pedidoId) => {
     const { data } = await customerApi.get(`/tienda/${slug}/mis-pedidos/${pedidoId}`);
     return data;
+  },
+
+  /* ── Consulta DNI/CE (público) ── */
+  consultarDni: async (numero) => {
+    const { data } = await publicApi.get('/consulta/dni', { params: { numero } });
+    return data;
+  },
+
+  /* ── Perfil del cliente (requiere token) ── */
+  getProfile: async (slug) => {
+    const { data } = await customerApi.get(`/tienda/${slug}/mi-perfil`);
+    return data;
+  },
+
+  updateProfile: async (slug, profileData) => {
+    const { data } = await customerApi.put(`/tienda/${slug}/mi-perfil`, profileData);
+    return data;
+  },
+
+  changePassword: async (slug, passwordData) => {
+    const { data } = await customerApi.put(`/tienda/${slug}/mi-perfil/password`, passwordData);
+    return data;
+  },
+
+  /* ── Devoluciones del cliente (requiere token) ── */
+  getMisDevoluciones: async (slug) => {
+    const { data } = await customerApi.get(`/tienda/${slug}/mis-devoluciones`);
+    return toArray(data);
   },
 };
