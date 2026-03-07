@@ -9,9 +9,12 @@ import {
   MapPin,
   ChevronDown,
   Package,
+  UserCog,
+  RotateCcw,
 } from 'lucide-react';
 import { useCartStore } from '../../stores/cartStore';
 import { useStorefrontAuthStore } from '../../stores/storefrontAuthStore';
+import { getImageUrl } from '../../services/storefrontService';
 
 export const StorefrontHeader = ({ config, sedes, selectedSede, onSedeChange, slug }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -38,7 +41,7 @@ export const StorefrontHeader = ({ config, sedes, selectedSede, onSedeChange, sl
           <Link to={`/tienda/${slug}`} className="flex items-center gap-3 shrink-0">
             {config?.negocio?.urlLogo ? (
               <img
-                src={config.negocio.urlLogo}
+                src={getImageUrl(config.negocio.urlLogo)}
                 alt={storeName}
                 className="h-8 w-8 rounded-full object-cover"
               />
@@ -145,6 +148,22 @@ export const StorefrontHeader = ({ config, sedes, selectedSede, onSedeChange, sl
                       >
                         <Package size={16} />
                         Mis Pedidos
+                      </Link>
+                      <Link
+                        to={`/tienda/${slug}/mi-perfil`}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50"
+                      >
+                        <UserCog size={16} />
+                        Mi Perfil
+                      </Link>
+                      <Link
+                        to={`/tienda/${slug}/mis-devoluciones`}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50"
+                      >
+                        <RotateCcw size={16} />
+                        Mis Devoluciones
                       </Link>
                       <button
                         onClick={handleLogout}

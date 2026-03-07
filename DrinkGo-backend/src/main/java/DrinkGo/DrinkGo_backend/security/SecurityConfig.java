@@ -38,6 +38,7 @@ public class SecurityConfig {
                                 "/restful/superadmin/auth/login", "/restful/admin/auth/login",
                                 "/restful/tienda/public/**",
                                 "/restful/tienda/auth/**",
+                                "/restful/consulta/**",
                                 "/uploads/**")
                         .permitAll()
                         .anyRequest().authenticated())

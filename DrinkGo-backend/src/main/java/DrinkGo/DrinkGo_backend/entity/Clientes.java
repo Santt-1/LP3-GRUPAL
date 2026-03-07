@@ -3,6 +3,7 @@ package DrinkGo.DrinkGo_backend.entity;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import jakarta.persistence.*;
@@ -56,6 +57,10 @@ public class Clientes {
     private LocalDate fechaNacimiento;
 
     private String direccion;
+
+    @JsonIgnore
+    @Column(name = "password_hash")
+    private String passwordHash;
 
     @Column(name = "total_compras", precision = 10, scale = 2)
     private BigDecimal totalCompras = BigDecimal.ZERO;
@@ -196,6 +201,14 @@ public class Clientes {
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public BigDecimal getTotalCompras() {

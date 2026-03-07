@@ -28,7 +28,7 @@ export const StorefrontLogin = () => {
 
     setIsLoading(true);
     try {
-      const data = await storefrontService.login({ email: email.trim(), password });
+      const data = await storefrontService.login({ slug, email: email.trim(), password });
       login(data.customer || data.cliente, data.token, slug, config?.negocio?.id);
       toast.success('¡Bienvenido!');
       navigate(

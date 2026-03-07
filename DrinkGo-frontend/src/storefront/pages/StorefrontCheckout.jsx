@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
-import { MapPin, Store, CreditCard, ArrowLeft, Loader2, ShoppingBag } from 'lucide-react';
+import { MapPin, Store, CreditCard, ArrowLeft, Loader2, ShoppingBag, Receipt, User, Search } from 'lucide-react';
+import { useConsultarRuc } from '@/shared/hooks/useConsultaDocumento';
 import { useCartStore } from '../stores/cartStore';
 import { useStorefrontAuthStore } from '../stores/storefrontAuthStore';
 import { storefrontService } from '../services/storefrontService';
@@ -11,6 +12,7 @@ import toast from 'react-hot-toast';
 export const StorefrontCheckout = () => {
   const { slug, selectedSede } = useOutletContext();
   const navigate = useNavigate();
+  const customer = useStorefrontAuthStore((s) => s.customer);
   const isAuthenticated = useStorefrontAuthStore((s) => s.isAuthenticated());
   const { items, getTotal, clearCart } = useCartStore();
   const subtotal = getTotal();
@@ -24,6 +26,13 @@ export const StorefrontCheckout = () => {
   const [distrito, setDistrito] = useState('');
   const [referencia, setReferencia] = useState('');
   const [observaciones, setObservaciones] = useState('');
+
+  // Comprobante
+  const rucLookup = useConsultarRuc();
+  const [tipoComprobante, setTipoComprobante] = useState('boleta');
+  const [docNumero, setDocNumero] = useState('');
+  const [docNombre, setDocNombre] = useState('');
+  const [docDireccion, setDocDireccion] = useState('');
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -39,6 +48,17 @@ export const StorefrontCheckout = () => {
     }
   }, [items, slug, navigate]);
 
+  // Pre-fill comprobante (boleta) with customer data
+  useEffect(() => {
+    if (customer) {
+      const nombreCompleto = [customer.nombres, customer.apellidos].filter(Boolean).join(' ');
+      setDocNombre(nombreCompleto);
+      if (customer.tipoDocumento === 'DNI' || customer.tipoDocumento === 'CE') {
+        setDocNumero(customer.numeroDocumento || '');
+      }
+    }
+  }, [customer]);
+
   const { data: metodosPago = [] } = useQuery({
     queryKey: ['storefront-metodos-pago', slug],
     queryFn: () => storefrontService.getMetodosPago(slug),
@@ -48,7 +68,7 @@ export const StorefrontCheckout = () => {
   const { data: zonasDelivery = [] } = useQuery({
     queryKey: ['storefront-zonas-delivery', slug, selectedSede?.id],
     queryFn: () => storefrontService.getZonasDelivery(slug, selectedSede?.id),
-    enabled: !!slug && !!selectedSede?.id && tipoPedido === 'delivery',
+    enabled: !!slug && tipoPedido === 'delivery',
   });
 
   const selectedZona = zonasDelivery.find((z) => z.id === zonaDeliveryId);
@@ -85,12 +105,27 @@ export const StorefrontCheckout = () => {
       return;
     }
 
+    if (tipoComprobante === 'factura') {
+      if (!docNumero.trim() || docNumero.trim().length !== 11) {
+        toast.error('Ingresa un RUC válido (11 dígitos)');
+        return;
+      }
+      if (!docNombre.trim()) {
+        toast.error('Ingresa la razón social para la factura');
+        return;
+      }
+    }
+
     const pedido = {
       sedeId: selectedSede?.id,
       tipoPedido,
       origenPedido: 'tienda_online',
       metodoPagoId,
       observaciones: observaciones.trim() || null,
+      tipoComprobante,
+      docClienteNumero: docNumero.trim() || null,
+      docClienteNombre: docNombre.trim() || null,
+      docClienteDireccion: tipoComprobante === 'factura' ? (docDireccion.trim() || null) : null,
       detalles: items.map((item) => ({
         productoId: item.product.id,
         cantidad: item.quantity,
@@ -308,6 +343,162 @@ export const StorefrontCheckout = () => {
                 placeholder="Instrucciones especiales para tu pedido..."
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
               />
+            </div>
+
+            {/* Comprobante */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                <Receipt size={18} className="text-amber-600" />
+                Comprobante de Pago
+              </h2>
+              <p className="text-xs text-gray-500 mb-4">
+                Selecciona el tipo de comprobante que deseas recibir
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <label
+                  className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${
+                    tipoComprobante === 'boleta'
+                      ? 'border-amber-500 bg-amber-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="tipoComprobante"
+                    value="boleta"
+                    checked={tipoComprobante === 'boleta'}
+                    onChange={(e) => {
+                      setTipoComprobante(e.target.value);
+                      if (customer) {
+                        const nombre = [customer.nombres, customer.apellidos].filter(Boolean).join(' ');
+                        setDocNombre(nombre);
+                        if (customer.tipoDocumento === 'DNI' || customer.tipoDocumento === 'CE') {
+                          setDocNumero(customer.numeroDocumento || '');
+                        } else {
+                          setDocNumero('');
+                        }
+                        setDocDireccion('');
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${tipoComprobante === 'boleta' ? 'border-amber-500 bg-amber-500' : 'border-gray-400'}`} />
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">Boleta</p>
+                    <p className="text-xs text-gray-500">DNI / CE</p>
+                  </div>
+                </label>
+                <label
+                  className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${
+                    tipoComprobante === 'factura'
+                      ? 'border-amber-500 bg-amber-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="tipoComprobante"
+                    value="factura"
+                    checked={tipoComprobante === 'factura'}
+                    onChange={(e) => {
+                      setTipoComprobante(e.target.value);
+                      setDocNumero('');
+                      setDocNombre('');
+                      setDocDireccion('');
+                    }}
+                    className="sr-only"
+                  />
+                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${tipoComprobante === 'factura' ? 'border-amber-500 bg-amber-500' : 'border-gray-400'}`} />
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">Factura</p>
+                    <p className="text-xs text-gray-500">RUC (empresa)</p>
+                  </div>
+                </label>
+              </div>
+
+              {tipoComprobante === 'boleta' && (
+                <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <User size={16} className="text-amber-600 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{docNombre || '—'}</p>
+                    {docNumero && (
+                      <p className="text-xs text-gray-500">
+                        {customer?.tipoDocumento || 'Doc'}: {docNumero}
+                      </p>
+                    )}
+                  </div>
+                  <span className="ml-auto text-xs text-gray-400 shrink-0">Datos de tu cuenta</span>
+                </div>
+              )}
+
+              {tipoComprobante === 'factura' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        RUC <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={docNumero}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            setDocNumero(val);
+                            rucLookup.reset();
+                            setDocNombre('');
+                            setDocDireccion('');
+                            if (val.length === 11) {
+                              rucLookup.buscar(val).then((data) => {
+                                if (data) {
+                                  setDocNombre(data.razon_social || '');
+                                  setDocDireccion(data.direccion || '');
+                                }
+                              });
+                            }
+                          }}
+                          placeholder="20123456789"
+                          maxLength={11}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                          {rucLookup.isLoading
+                            ? <Loader2 size={14} className="animate-spin" />
+                            : <Search size={14} />}
+                        </div>
+                      </div>
+                      {rucLookup.error && (
+                        <p className="text-xs text-red-500 mt-1">{rucLookup.error}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Razón Social <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={docNombre}
+                        onChange={(e) => setDocNombre(e.target.value)}
+                        placeholder={rucLookup.isLoading ? 'Buscando...' : 'Mi Empresa S.A.C.'}
+                        disabled={rucLookup.isLoading}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Dirección Fiscal
+                    </label>
+                    <input
+                      type="text"
+                      value={docDireccion}
+                      onChange={(e) => setDocDireccion(e.target.value)}
+                      placeholder="Av. Industrial 456, Lima"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

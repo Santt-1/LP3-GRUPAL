@@ -7,6 +7,7 @@ import DrinkGo.DrinkGo_backend.service.IClientesService;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,9 @@ public class ClientesController {
     @Autowired
     private IClientesService service;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     @GetMapping("/clientes")
     public List<Clientes> buscarTodos() {
         return service.buscarTodos();
@@ -27,6 +31,9 @@ public class ClientesController {
 
     @PostMapping("/clientes")
     public Clientes guardar(@RequestBody Clientes entity) {
+        if (entity.getPasswordHash() != null && !entity.getPasswordHash().isBlank()) {
+            entity.setPasswordHash(passwordEncoder.encode(entity.getPasswordHash()));
+        }
         service.guardar(entity);
         return entity;
     }
