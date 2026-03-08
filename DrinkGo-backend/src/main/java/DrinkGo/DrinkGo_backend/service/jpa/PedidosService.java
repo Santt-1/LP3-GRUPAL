@@ -10,10 +10,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import DrinkGo.DrinkGo_backend.entity.Almacenes;
+import DrinkGo.DrinkGo_backend.entity.DetalleCombos;
 import DrinkGo.DrinkGo_backend.entity.DetallePedidos;
 import DrinkGo.DrinkGo_backend.entity.Pedidos;
 import DrinkGo.DrinkGo_backend.entity.Ventas;
 import DrinkGo.DrinkGo_backend.repository.AlmacenesRepository;
+import DrinkGo.DrinkGo_backend.repository.DetalleCombosRepository;
 import DrinkGo.DrinkGo_backend.repository.PedidosRepository;
 import DrinkGo.DrinkGo_backend.service.IPedidosService;
 import DrinkGo.DrinkGo_backend.service.InventarioTransaccionalService;
@@ -29,6 +31,9 @@ public class PedidosService implements IPedidosService {
 
     @Autowired
     private AlmacenesRepository almacenesRepo;
+
+    @Autowired
+    private DetalleCombosRepository detalleCombosRepo;
 
     @Autowired
     private VentasOnlineService ventasOnlineService;
@@ -123,14 +128,29 @@ public class PedidosService implements IPedidosService {
         }
 
         for (DetallePedidos detalle : pedido.getDetalles()) {
-            if (detalle.getProducto() == null) continue;
-            Long productoId = detalle.getProducto().getId();
-            BigDecimal cantidad = detalle.getCantidad();
-            try {
-                inventarioService.reservarStockConFallback(productoId, almacenPreferidoId, negocioId, cantidad);
-                System.out.println("✅ Stock reservado — producto " + productoId + " x" + cantidad);
-            } catch (Exception e) {
-                System.err.println("⚠️ No se pudo reservar stock para producto " + productoId + ": " + e.getMessage());
+            if (detalle.getProducto() != null) {
+                Long productoId = detalle.getProducto().getId();
+                BigDecimal cantidad = detalle.getCantidad();
+                try {
+                    inventarioService.reservarStockConFallback(productoId, almacenPreferidoId, negocioId, cantidad);
+                    System.out.println("✅ Stock reservado — producto " + productoId + " x" + cantidad);
+                } catch (Exception e) {
+                    System.err.println("⚠️ No se pudo reservar stock para producto " + productoId + ": " + e.getMessage());
+                }
+            } else if (detalle.getCombo() != null) {
+                Long comboId = detalle.getCombo().getId();
+                BigDecimal cantidadPedido = detalle.getCantidad();
+                List<DetalleCombos> componentes = detalleCombosRepo.findByComboId(comboId);
+                for (DetalleCombos comp : componentes) {
+                    Long productoId = comp.getProducto().getId();
+                    BigDecimal cantidadTotal = cantidadPedido.multiply(BigDecimal.valueOf(comp.getCantidad()));
+                    try {
+                        inventarioService.reservarStockConFallback(productoId, almacenPreferidoId, negocioId, cantidadTotal);
+                        System.out.println("✅ Stock reservado (combo " + comboId + ") — producto " + productoId + " x" + cantidadTotal);
+                    } catch (Exception e) {
+                        System.err.println("⚠️ No se pudo reservar stock (combo " + comboId + ") para producto " + productoId + ": " + e.getMessage());
+                    }
+                }
             }
         }
     }
@@ -242,14 +262,29 @@ public class PedidosService implements IPedidosService {
         }
 
         for (DetallePedidos detalle : pedido.getDetalles()) {
-            if (detalle.getProducto() == null) continue;
-            Long productoId = detalle.getProducto().getId();
-            BigDecimal cantidad = detalle.getCantidad();
-            try {
-                inventarioService.liberarReservaConFallback(productoId, almacenPreferidoId, negocioId, cantidad);
-                System.out.println("✅ Reserva liberada — producto " + productoId + " x" + cantidad);
-            } catch (Exception e) {
-                System.err.println("⚠️ No se pudo liberar reserva para producto " + productoId + ": " + e.getMessage());
+            if (detalle.getProducto() != null) {
+                Long productoId = detalle.getProducto().getId();
+                BigDecimal cantidad = detalle.getCantidad();
+                try {
+                    inventarioService.liberarReservaConFallback(productoId, almacenPreferidoId, negocioId, cantidad);
+                    System.out.println("✅ Reserva liberada — producto " + productoId + " x" + cantidad);
+                } catch (Exception e) {
+                    System.err.println("⚠️ No se pudo liberar reserva para producto " + productoId + ": " + e.getMessage());
+                }
+            } else if (detalle.getCombo() != null) {
+                Long comboId = detalle.getCombo().getId();
+                BigDecimal cantidadPedido = detalle.getCantidad();
+                List<DetalleCombos> componentes = detalleCombosRepo.findByComboId(comboId);
+                for (DetalleCombos comp : componentes) {
+                    Long productoId = comp.getProducto().getId();
+                    BigDecimal cantidadTotal = cantidadPedido.multiply(BigDecimal.valueOf(comp.getCantidad()));
+                    try {
+                        inventarioService.liberarReservaConFallback(productoId, almacenPreferidoId, negocioId, cantidadTotal);
+                        System.out.println("✅ Reserva liberada (combo " + comboId + ") — producto " + productoId + " x" + cantidadTotal);
+                    } catch (Exception e) {
+                        System.err.println("⚠️ No se pudo liberar reserva (combo " + comboId + ") para producto " + productoId + ": " + e.getMessage());
+                    }
+                }
             }
         }
     }
@@ -278,18 +313,37 @@ public class PedidosService implements IPedidosService {
         }
 
         for (DetallePedidos detalle : pedido.getDetalles()) {
-            if (detalle.getProducto() == null) continue;
-            Long productoId = detalle.getProducto().getId();
-            BigDecimal cantidad = detalle.getCantidad();
-            try {
-                inventarioService.confirmarReservaYSalidaConFallback(
-                    negocioId, productoId, almacenPreferidoId, cantidad, usuarioId,
-                    "Entrega pedido " + pedido.getNumeroPedido(),
-                    pedido.getNumeroPedido()
-                );
-                System.out.println("✅ Salida confirmada — producto " + productoId + " x" + cantidad);
-            } catch (Exception e) {
-                System.err.println("⚠️ No se pudo confirmar salida para producto " + productoId + ": " + e.getMessage());
+            if (detalle.getProducto() != null) {
+                Long productoId = detalle.getProducto().getId();
+                BigDecimal cantidad = detalle.getCantidad();
+                try {
+                    inventarioService.confirmarReservaYSalidaConFallback(
+                        negocioId, productoId, almacenPreferidoId, cantidad, usuarioId,
+                        "Entrega pedido " + pedido.getNumeroPedido(),
+                        pedido.getNumeroPedido()
+                    );
+                    System.out.println("✅ Salida confirmada — producto " + productoId + " x" + cantidad);
+                } catch (Exception e) {
+                    System.err.println("⚠️ No se pudo confirmar salida para producto " + productoId + ": " + e.getMessage());
+                }
+            } else if (detalle.getCombo() != null) {
+                Long comboId = detalle.getCombo().getId();
+                BigDecimal cantidadPedido = detalle.getCantidad();
+                List<DetalleCombos> componentes = detalleCombosRepo.findByComboId(comboId);
+                for (DetalleCombos comp : componentes) {
+                    Long productoId = comp.getProducto().getId();
+                    BigDecimal cantidadTotal = cantidadPedido.multiply(BigDecimal.valueOf(comp.getCantidad()));
+                    try {
+                        inventarioService.confirmarReservaYSalidaConFallback(
+                            negocioId, productoId, almacenPreferidoId, cantidadTotal, usuarioId,
+                            "Entrega pedido " + pedido.getNumeroPedido() + " (combo)",
+                            pedido.getNumeroPedido()
+                        );
+                        System.out.println("✅ Salida confirmada (combo " + comboId + ") — producto " + productoId + " x" + cantidadTotal);
+                    } catch (Exception e) {
+                        System.err.println("⚠️ No se pudo confirmar salida (combo " + comboId + ") para producto " + productoId + ": " + e.getMessage());
+                    }
+                }
             }
         }
     }

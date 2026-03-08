@@ -113,7 +113,9 @@ export function useCrearPedidoManual() {
           const itemTotal = itemSubtotal + itemImpuesto;
           
           return {
-            producto: { id: item.productoId }, // ✅ Objeto con ID
+            ...(item.comboId
+              ? { combo: { id: item.comboId } }
+              : { producto: { id: item.productoId } }),
             nombreProducto: item.nombreProducto,
             skuProducto: item.skuProducto,
             cantidad: item.cantidad,

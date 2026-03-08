@@ -175,7 +175,9 @@ export const StorefrontCheckout = () => {
       nombreTitular: nombreTitular.trim() || null,
       numeroReferencia: numeroReferencia.trim() || null,
       detalles: items.map((item) => ({
-        productoId: item.product.id,
+        ...(item.product.isCombo
+          ? { comboId: item.product.comboId }
+          : { productoId: item.product.id }),
         cantidad: item.quantity,
         precioUnitario: item.product.precioVenta,
       })),

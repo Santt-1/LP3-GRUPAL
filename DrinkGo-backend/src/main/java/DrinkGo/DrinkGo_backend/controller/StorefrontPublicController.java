@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,12 @@ public class StorefrontPublicController {
 
     @Autowired
     private ZonasDeliveryRepository zonasDeliveryRepo;
+
+    @Autowired
+    private CombosRepository combosRepo;
+
+    @Autowired
+    private PromocionesRepository promocionesRepo;
 
     /* ── Helper: buscar config o lanzar 404 ── */
     private ResponseEntity<Map<String, String>> notFound(String slug) {
@@ -230,5 +237,73 @@ public class StorefrontPublicController {
             zonas = zonasDeliveryRepo.findByNegocioId(negocioId);
         }
         return ResponseEntity.ok(zonas);
+    }
+
+    /*
+     * ══════════════════════════════════════════════
+     * GET /restful/tienda/public/{slug}/combos
+     * Solo devuelve combos visibles en tienda online y vigentes
+     * ══════════════════════════════════════════════
+     */
+    @GetMapping("/{slug}/combos")
+    public ResponseEntity<?> getCombosBySlug(
+            @PathVariable String slug,
+            @RequestParam(required = false) Long sedeId) {
+
+        Optional<ConfiguracionTiendaOnline> config = configRepo.findBySlugTienda(slug);
+        if (config.isEmpty()) {
+            return notFound(slug);
+        }
+        Long negocioId = config.get().getNegocio().getId();
+        LocalDate hoy = LocalDate.now();
+
+        List<Combos> combos;
+        if (sedeId != null) {
+            combos = combosRepo.findBySedeId(sedeId);
+        } else {
+            combos = combosRepo.findByNegocioId(negocioId);
+        }
+
+        List<Combos> result = combos.stream()
+                .filter(c -> Boolean.TRUE.equals(c.getVisibleTiendaOnline()))
+                .filter(c -> c.getFechaInicio() == null || !c.getFechaInicio().isAfter(hoy))
+                .filter(c -> c.getFechaFin() == null || !c.getFechaFin().isBefore(hoy))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
+
+    /*
+     * ══════════════════════════════════════════════
+     * GET /restful/tienda/public/{slug}/promociones
+     * Solo devuelve promociones vigentes del negocio
+     * ══════════════════════════════════════════════
+     */
+    @GetMapping("/{slug}/promociones")
+    public ResponseEntity<?> getPromocionesActivasBySlug(
+            @PathVariable String slug,
+            @RequestParam(required = false) Long sedeId) {
+
+        Optional<ConfiguracionTiendaOnline> config = configRepo.findBySlugTienda(slug);
+        if (config.isEmpty()) {
+            return notFound(slug);
+        }
+        Long negocioId = config.get().getNegocio().getId();
+        LocalDate hoy = LocalDate.now();
+
+        List<Promociones> promociones;
+        if (sedeId != null) {
+            promociones = promocionesRepo.findBySedeId(sedeId);
+        } else {
+            promociones = promocionesRepo.findByNegocioId(negocioId);
+        }
+
+        List<Promociones> result = promociones.stream()
+                .filter(p -> p.getValidoDesde() == null || !p.getValidoDesde().toLocalDate().isAfter(hoy))
+                .filter(p -> p.getValidoHasta() == null || !p.getValidoHasta().toLocalDate().isBefore(hoy))
+                .filter(p -> p.getMaxUsos() == null || p.getUsosActuales() < p.getMaxUsos())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
     }
 }

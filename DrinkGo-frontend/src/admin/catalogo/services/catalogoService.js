@@ -136,6 +136,10 @@ export const combosService = {
     const { data } = await adminApi.get(url);
     return toArray(data);
   },
+  getByNegocio: async (negocioId) => {
+    const { data } = await adminApi.get(`/combos/negocio/${negocioId}`);
+    return toArray(data);
+  },
   getById: async (id) => {
     const { data } = await adminApi.get(`/combos/${id}`);
     return data;
