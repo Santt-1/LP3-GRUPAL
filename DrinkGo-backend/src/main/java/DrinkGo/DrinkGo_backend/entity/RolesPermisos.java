@@ -10,7 +10,9 @@ import java.time.LocalDateTime;
 @JsonPropertyOrder({ "id", "rolId", "permisoId", "alcance", "creadoEn" })
 public class RolesPermisos {
 
-    /** Alcance del permiso: completo = acceso total, caja_asignada = solo su caja */
+    /**
+     * Alcance del permiso: completo = acceso total, caja_asignada = solo su caja
+     */
     public enum Alcance {
         completo,
         caja_asignada
@@ -20,11 +22,11 @@ public class RolesPermisos {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rol_id", nullable = false)
     private Roles rol;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "permiso_id", nullable = false)
     private PermisosSistema permiso;
 
@@ -57,12 +59,20 @@ public class RolesPermisos {
         this.rol = rol;
     }
 
+    public Long getRolId() {
+        return rol != null ? rol.getId() : null;
+    }
+
     public PermisosSistema getPermiso() {
         return permiso;
     }
 
     public void setPermiso(PermisosSistema permiso) {
         this.permiso = permiso;
+    }
+
+    public Long getPermisoId() {
+        return permiso != null ? permiso.getId() : null;
     }
 
     public Alcance getAlcance() {

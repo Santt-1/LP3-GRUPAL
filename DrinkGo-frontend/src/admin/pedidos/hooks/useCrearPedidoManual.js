@@ -113,7 +113,9 @@ export function useCrearPedidoManual() {
           const itemTotal = itemSubtotal + itemImpuesto;
           
           return {
-            producto: { id: item.productoId }, // ✅ Objeto con ID
+            ...(item.comboId
+              ? { combo: { id: item.comboId } }
+              : { producto: { id: item.productoId } }),
             nombreProducto: item.nombreProducto,
             skuProducto: item.skuProducto,
             cantidad: item.cantidad,
@@ -147,7 +149,10 @@ export function useCrearPedidoManual() {
             pedido: { id: response.id },
             metodoPago: { id: metodoEncontrado.id },
             monto: pedidoData.total,
-            numeroReferencia: null,
+            numeroReferencia: pedidoData.numeroReferencia || null,
+            banco: pedidoData.banco || null,
+            ultimosCuatroDigitos: pedidoData.ultimosCuatroDigitos || null,
+            nombreTitular: pedidoData.nombreTitular || null,
             estadoPago: 'pendiente',
           });
           console.log('💳 Registro de pago pendiente creado para pedido', response.id);

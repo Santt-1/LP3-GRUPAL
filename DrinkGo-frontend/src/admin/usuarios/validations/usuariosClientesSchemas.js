@@ -47,26 +47,37 @@ export const usuarioSchema = z
 /* ================================================================
  *  CLIENTE
  * ================================================================ */
-export const clienteSchema = z.object({
-  tipoDocumento: z.string().min(1, 'Tipo de documento requerido'),
-  numeroDocumento: z.string().min(6, 'Número muy corto').max(20, 'Número muy largo'),
-  nombres: z.string().optional().default(''),
-  apellidos: z.string().optional().default(''),
-  razonSocial: z.string().optional().default(''),
-  nombreComercial: z.string().optional().default(''),
-  email: z
-    .string()
-    .optional()
-    .default('')
-    .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), 'Correo inválido'),
-  telefono: z
-    .string()
-    .optional()
-    .default('')
-    .refine((v) => !v || /^9\d{8}$/.test(v), 'Teléfono inválido (9XXXXXXXX)'),
-  fechaNacimiento: z.string().optional().default(''),
-  direccion: z.string().optional().default(''),
-});
+export const clienteSchema = z
+  .object({
+    tipoDocumento: z.string().min(1, 'Tipo de documento requerido'),
+    numeroDocumento: z.string().min(6, 'Número muy corto').max(20, 'Número muy largo'),
+    nombres: z.string().optional().default(''),
+    apellidos: z.string().optional().default(''),
+    razonSocial: z.string().optional().default(''),
+    nombreComercial: z.string().optional().default(''),
+    email: z
+      .string()
+      .optional()
+      .default('')
+      .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), 'Correo inválido'),
+    telefono: z
+      .string()
+      .optional()
+      .default('')
+      .refine((v) => !v || /^9\d{8}$/.test(v), 'Teléfono inválido (9XXXXXXXX)'),
+    fechaNacimiento: z.string().optional().default(''),
+    direccion: z.string().optional().default(''),
+    password: z.string().optional().default(''),
+    confirmPassword: z.string().optional().default(''),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password && data.password.length > 0 && data.password.length < 6) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Mínimo 6 caracteres', path: ['password'] });
+    }
+    if (data.password && data.password !== data.confirmPassword) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Las contraseñas no coinciden', path: ['confirmPassword'] });
+    }
+  });
 
 /* ================================================================
  *  ROL

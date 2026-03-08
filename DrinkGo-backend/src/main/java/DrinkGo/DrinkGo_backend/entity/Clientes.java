@@ -3,6 +3,8 @@ package DrinkGo.DrinkGo_backend.entity;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import jakarta.persistence.*;
@@ -24,9 +26,13 @@ public class Clientes {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "negocio_id", nullable = false)
     private Negocios negocio;
+
+    @Column(name = "negocio_id", insertable = false, updatable = false)
+    private Long negocioId;
 
     @Column(name = "uuid", unique = true, nullable = false, length = 36)
     private String uuid;
@@ -56,6 +62,10 @@ public class Clientes {
     private LocalDate fechaNacimiento;
 
     private String direccion;
+
+    @JsonIgnore
+    @Column(name = "password_hash")
+    private String passwordHash;
 
     @Column(name = "total_compras", precision = 10, scale = 2)
     private BigDecimal totalCompras = BigDecimal.ZERO;
@@ -102,12 +112,17 @@ public class Clientes {
         this.id = id;
     }
 
+    @JsonIgnore
     public Negocios getNegocio() {
         return negocio;
     }
 
     public void setNegocio(Negocios negocio) {
         this.negocio = negocio;
+    }
+
+    public Long getNegocioId() {
+        return negocioId;
     }
 
     public String getUuid() {
@@ -196,6 +211,14 @@ public class Clientes {
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public BigDecimal getTotalCompras() {
