@@ -3,10 +3,12 @@
  * Permite buscar y agregar productos al carrito
  */
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useBuscarProductosConStock } from '@/admin/hooks/useProductos';
+import { combosService } from '@/admin/catalogo/services/catalogoService';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { message } from '@/shared/utils/notifications';
-import { Search, Plus, Minus, Trash2, Package, Loader2, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, Package, Loader2, AlertTriangle, Gift } from 'lucide-react';
 
 export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
   const [busqueda, setBusqueda] = useState('');
@@ -14,6 +16,19 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
   const debouncedSearch = useDebounce(busqueda, 400);
   const { data: productosEncontrados = [], isLoading: buscandoProductos } =
     useBuscarProductosConStock(negocioId, debouncedSearch, debouncedSearch.trim().length >= 2);
+
+  const { data: todosLosCombos = [] } = useQuery({
+    queryKey: ['combos-negocio', negocioId],
+    queryFn: () => combosService.getByNegocio(negocioId),
+    enabled: !!negocioId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const combosEncontrados = debouncedSearch.trim().length >= 2
+    ? todosLosCombos.filter((c) =>
+        c.nombre?.toLowerCase().includes(debouncedSearch.toLowerCase())
+      )
+    : [];
   
   const stockDeProducto = (producto) => {
     const s = producto.stock;
@@ -25,7 +40,7 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
     const stockDisponible = stockDeProducto(producto);
 
     // Verificar si ya existe en el carrito
-    const existente = items.find(item => item.productoId === producto.id);
+    const existente = items.find(item => item.productoId === producto.id && !item.comboId);
 
     if (existente) {
       const nuevaCantidad = existente.cantidad + 1;
@@ -61,29 +76,58 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
     setBusqueda('');
   };
   
-  const cambiarCantidad = (productoId, nuevaCantidad) => {
+  const cambiarCantidad = (itemKey, nuevaCantidad, esCombo = false) => {
     if (nuevaCantidad <= 0) {
-      eliminarProducto(productoId);
+      eliminarItem(itemKey, esCombo);
       return;
     }
 
-    const item = items.find(i => i.productoId === productoId);
-    if (item?.stock !== null && item?.stock !== undefined && nuevaCantidad > item.stock) {
-      message.warning(`Stock insuficiente. Solo hay ${item.stock} unidades disponibles de "${item.nombreProducto}".`);
-      return;
+    if (!esCombo) {
+      const item = items.find(i => i.productoId === itemKey);
+      if (item?.stock !== null && item?.stock !== undefined && nuevaCantidad > item.stock) {
+        message.warning(`Stock insuficiente. Solo hay ${item.stock} unidades disponibles de "${item.nombreProducto}".`);
+        return;
+      }
     }
 
     onItemsChange(
       items.map(i =>
-        i.productoId === productoId
+        (esCombo ? i.comboId === itemKey : i.productoId === itemKey)
           ? { ...i, cantidad: nuevaCantidad }
           : i
       )
     );
   };
   
-  const eliminarProducto = (productoId) => {
-    onItemsChange(items.filter(item => item.productoId !== productoId));
+  const eliminarItem = (itemKey, esCombo = false) => {
+    onItemsChange(items.filter(i => esCombo ? i.comboId !== itemKey : i.productoId !== itemKey));
+  };
+
+  const agregarCombo = (combo) => {
+    const itemKey = `combo-${combo.id}`;
+    const existente = items.find(item => item.comboId === combo.id);
+    if (existente) {
+      onItemsChange(
+        items.map(item =>
+          item.comboId === combo.id
+            ? { ...item, cantidad: item.cantidad + 1 }
+            : item
+        )
+      );
+    } else {
+      onItemsChange([
+        ...items,
+        {
+          comboId: combo.id,
+          nombreProducto: combo.nombre,
+          skuProducto: null,
+          cantidad: 1,
+          precioUnitario: parseFloat(combo.precioCombo || 0),
+          stock: null,
+        },
+      ]);
+    }
+    setBusqueda('');
   };
   
   const calcularSubtotal = (item) => {
@@ -116,8 +160,29 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
         </div>
         
         {/* Resultados de búsqueda */}
-        {debouncedSearch.trim().length >= 2 && productosEncontrados.length > 0 && (
+        {debouncedSearch.trim().length >= 2 && (productosEncontrados.length > 0 || combosEncontrados.length > 0) && (
           <div className="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            {combosEncontrados.map((combo) => (
+              <button
+                key={`combo-${combo.id}`}
+                type="button"
+                onClick={() => agregarCombo(combo)}
+                className="w-full text-left px-4 py-3 hover:bg-purple-50 border-b border-gray-100 last:border-b-0 flex items-center justify-between"
+              >
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <Gift className="w-3.5 h-3.5 text-purple-600" />
+                    <p className="font-medium text-gray-900">{combo.nombre}</p>
+                    <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">Combo</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-sm text-gray-600">
+                    {combo.precioRegular && <span className="line-through text-gray-400">S/ {parseFloat(combo.precioRegular).toFixed(2)}</span>}
+                    <span className="font-semibold text-purple-600">S/ {parseFloat(combo.precioCombo || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+                <Plus className="w-5 h-5 text-purple-600" />
+              </button>
+            ))}
             {productosEncontrados.map((producto) => (
               <button
                 key={producto.id}
@@ -146,7 +211,8 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
         {/* Sin resultados */}
         {debouncedSearch.trim().length >= 2 && 
          !buscandoProductos && 
-         productosEncontrados.length === 0 && (
+         productosEncontrados.length === 0 &&
+         combosEncontrados.length === 0 && (
           <p className="mt-2 text-sm text-gray-500">
             No se encontraron productos
           </p>
@@ -175,16 +241,21 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
         ) : (
           <div className="bg-gray-50 rounded-lg divide-y divide-gray-200">
             {items.map((item) => (
-              <div key={item.productoId} className="p-4 flex items-center gap-4">
+              <div key={item.comboId ? `combo-${item.comboId}` : item.productoId} className="p-4 flex items-center gap-4">
                 {/* Info del producto */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">
-                    {item.nombreProducto}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    {item.comboId && <Gift className="w-3.5 h-3.5 text-purple-500 shrink-0" />}
+                    <p className="font-medium text-gray-900 truncate">
+                      {item.nombreProducto}
+                    </p>
+                    {item.comboId && (
+                      <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full shrink-0">Combo</span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 flex-wrap">
                     <span>S/ {item.precioUnitario.toFixed(2)}</span>
-                    <span>•</span>
-                    <span>SKU: {item.skuProducto}</span>
+                    {item.skuProducto && <><span>•</span><span>SKU: {item.skuProducto}</span></>}
                     {item.stock !== null && item.stock !== undefined && (
                       <>
                         <span>•</span>
@@ -207,7 +278,7 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => cambiarCantidad(item.productoId, item.cantidad - 1)}
+                    onClick={() => cambiarCantidad(item.comboId ?? item.productoId, item.cantidad - 1, !!item.comboId)}
                     className="p-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
                     <Minus className="w-4 h-4 text-gray-600" />
@@ -217,16 +288,16 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
                     type="number"
                     min="1"
                     value={item.cantidad}
-                    onChange={(e) => cambiarCantidad(item.productoId, parseInt(e.target.value) || 1)}
+                    onChange={(e) => cambiarCantidad(item.comboId ?? item.productoId, parseInt(e.target.value) || 1, !!item.comboId)}
                     className="w-16 px-2 py-1.5 text-center border border-gray-300 rounded-lg"
                   />
                   
                   <button
                     type="button"
-                    onClick={() => cambiarCantidad(item.productoId, item.cantidad + 1)}
-                    disabled={item.stock !== null && item.stock !== undefined && item.cantidad >= item.stock}
+                    onClick={() => cambiarCantidad(item.comboId ?? item.productoId, item.cantidad + 1, !!item.comboId)}
+                    disabled={!item.comboId && item.stock !== null && item.stock !== undefined && item.cantidad >= item.stock}
                     className="p-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                    title={item.stock !== null && item.cantidad >= item.stock ? `Stock máximo alcanzado (${item.stock})` : undefined}
+                    title={!item.comboId && item.stock !== null && item.cantidad >= item.stock ? `Stock máximo alcanzado (${item.stock})` : undefined}
                   >
                     <Plus className="w-4 h-4 text-gray-600" />
                   </button>
@@ -242,9 +313,9 @@ export function SelectorProductos({ items = [], onItemsChange, negocioId }) {
                 {/* Botón eliminar */}
                 <button
                   type="button"
-                  onClick={() => eliminarProducto(item.productoId)}
+                  onClick={() => eliminarItem(item.comboId ?? item.productoId, !!item.comboId)}
                   className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                  title="Eliminar producto"
+                  title="Eliminar"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

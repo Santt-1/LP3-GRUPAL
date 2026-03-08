@@ -11,4 +11,7 @@ public interface DetalleCombosRepository extends JpaRepository<DetalleCombos, Lo
 
     @Query("SELECT dc FROM DetalleCombos dc JOIN FETCH dc.combo JOIN FETCH dc.producto WHERE dc.combo.negocio.id = :negocioId")
     List<DetalleCombos> findByComboNegocioId(@Param("negocioId") Long negocioId);
+
+    @Query("SELECT dc FROM DetalleCombos dc JOIN FETCH dc.producto WHERE dc.combo.id = :comboId")
+    List<DetalleCombos> findByComboId(@Param("comboId") Long comboId);
 }

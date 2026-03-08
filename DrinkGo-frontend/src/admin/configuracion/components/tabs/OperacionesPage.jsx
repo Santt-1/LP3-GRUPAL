@@ -7,19 +7,22 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { CreditCard, Truck, LayoutGrid } from 'lucide-react';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { MetodosPagoTab } from './MetodosPagoTab';
 import { ZonasDeliveryTab } from './ZonasDeliveryTab';
 import { MesasTab } from './MesasTab';
 
 const TABS = [
-  { key: 'metodos-pago', label: 'Métodos de Pago', icon: CreditCard },
-  { key: 'zonas-delivery', label: 'Zonas Delivery', icon: Truck },
-  { key: 'mesas', label: 'Mesas', icon: LayoutGrid },
+  { key: 'metodos-pago',    label: 'Métodos de Pago', icon: CreditCard, permiso: 'm.configuracion.operaciones.metodos-pago' },
+  { key: 'zonas-delivery', label: 'Zonas Delivery',   icon: Truck,      permiso: 'm.configuracion.operaciones.zonas-delivery' },
+  { key: 'mesas',          label: 'Mesas',            icon: LayoutGrid, permiso: 'm.configuracion.operaciones.mesas' },
 ];
 
 export const OperacionesPage = () => {
   const outletContext = useOutletContext();
-  const [activeTab, setActiveTab] = useState('metodos-pago');
+  const hasPermiso = useAdminAuthStore((s) => s.hasPermiso);
+  const visibleTabs = TABS.filter((t) => hasPermiso(t.permiso));
+  const [activeTab, setActiveTab] = useState(() => visibleTabs[0]?.key ?? 'metodos-pago');
 
   return (
     <div className="space-y-6">
@@ -34,7 +37,7 @@ export const OperacionesPage = () => {
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex gap-6" aria-label="Pestañas de operaciones">
-          {TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button

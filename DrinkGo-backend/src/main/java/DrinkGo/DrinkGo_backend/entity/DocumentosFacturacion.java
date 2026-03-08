@@ -136,7 +136,7 @@ public class DocumentosFacturacion {
     private String descripcionMotivoNota;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @JoinColumn(name = "usuario_id")
     private Usuarios usuario;
 
     @Column(name = "esta_activo")

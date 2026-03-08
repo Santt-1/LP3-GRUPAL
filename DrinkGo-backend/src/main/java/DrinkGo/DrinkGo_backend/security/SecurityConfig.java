@@ -36,6 +36,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/restful/token", "/restful/registros",
                                 "/restful/superadmin/auth/login", "/restful/admin/auth/login",
+                                "/restful/tienda/public/**",
+                                "/restful/tienda/auth/**",
+                                "/restful/consulta/**",
                                 "/uploads/**")
                         .permitAll()
                         .anyRequest().authenticated())

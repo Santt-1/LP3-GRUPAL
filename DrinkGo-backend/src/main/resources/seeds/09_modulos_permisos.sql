@@ -39,6 +39,10 @@ INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id
 SELECT 'configuracion.operaciones', 'Operaciones', 'Configuración de parámetros operativos',
     id, 'SlidersHorizontal', 2, 1 FROM modulos_sistema WHERE codigo = 'configuracion';
 
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'configuracion.categorias-gastos', 'Categorías de Gastos', 'Categorías para clasificar gastos operativos',
+    id, 'Tags', 3, 1 FROM modulos_sistema WHERE codigo = 'configuracion';
+
 -- Submódulos de Catálogo
 INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
 SELECT 'catalogo.productos', 'Productos', 'Gestión del catálogo de productos',
@@ -108,7 +112,8 @@ SELECT 'ventas.historial', 'Historial de Ventas', 'Historial de ventas realizada
     id, 'History', 4, 1 FROM modulos_sistema WHERE codigo = 'ventas';
 
 INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
-SELECT 'ventas.gastos', 'Gastos', 'Gestión de gastos externos y recurrentes',
+
+SELECT 'ventas.gastos', 'Gastos', 'Registro de gastos operativos por sede',
     id, 'TrendingDown', 5, 1 FROM modulos_sistema WHERE codigo = 'ventas';
 
 -- Submódulos de Devoluciones
@@ -132,6 +137,66 @@ SELECT 'facturacion.series', 'Series', 'Series de comprobantes electrónicos',
 INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
 SELECT 'facturacion.metodos', 'Métodos de Pago', 'Configuración de métodos de pago',
     id, 'CreditCard', 3, 1 FROM modulos_sistema WHERE codigo = 'facturacion';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'facturacion.pse', 'PSE Electrónico', 'Configuración y emisión de comprobantes electrónicos PSE',
+    id, 'Zap', 4, 1 FROM modulos_sistema WHERE codigo = 'facturacion';
+
+-- ============================================================
+-- 2.5. SUB-SUBMÓDULOS (tabs internos dentro de submódulos)
+-- ============================================================
+
+-- Tabs internos de configuracion.negocio
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'configuracion.negocio.negocio', 'Mi Negocio', 'Datos generales del negocio',
+    id, 'Building2', 1, 1 FROM modulos_sistema WHERE codigo = 'configuracion.negocio';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'configuracion.negocio.sedes', 'Sedes', 'Gestión de sedes y almacenes',
+    id, 'MapPin', 2, 1 FROM modulos_sistema WHERE codigo = 'configuracion.negocio';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'configuracion.negocio.tienda-online', 'Tienda Online', 'Configuración de la tienda online',
+    id, 'Globe', 3, 1 FROM modulos_sistema WHERE codigo = 'configuracion.negocio';
+
+-- Tabs internos de configuracion.operaciones
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'configuracion.operaciones.metodos-pago', 'Métodos de Pago', 'Configuración de métodos de pago aceptados',
+    id, 'CreditCard', 1, 1 FROM modulos_sistema WHERE codigo = 'configuracion.operaciones';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'configuracion.operaciones.zonas-delivery', 'Zonas Delivery', 'Configuración de zonas de reparto',
+    id, 'Truck', 2, 1 FROM modulos_sistema WHERE codigo = 'configuracion.operaciones';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'configuracion.operaciones.mesas', 'Mesas', 'Gestión de mesas del local',
+    id, 'LayoutGrid', 3, 1 FROM modulos_sistema WHERE codigo = 'configuracion.operaciones';
+
+-- Tabs internos de usuarios (tabs de la página principal)
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'usuarios.usuarios', 'Usuarios', 'Gestión de usuarios del negocio',
+    id, 'Users', 1, 1 FROM modulos_sistema WHERE codigo = 'usuarios';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'usuarios.clientes', 'Clientes', 'Base de datos de clientes',
+    id, 'UserCheck', 2, 1 FROM modulos_sistema WHERE codigo = 'usuarios';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'usuarios.roles', 'Roles', 'Gestión de roles y permisos personalizados',
+    id, 'Shield', 3, 1 FROM modulos_sistema WHERE codigo = 'usuarios';
+
+-- Tabs internos de catalogo.clasificaciones
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'catalogo.clasificaciones.categorias', 'Categorías', 'Gestión de categorías de productos',
+    id, 'FolderTree', 1, 1 FROM modulos_sistema WHERE codigo = 'catalogo.clasificaciones';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'catalogo.clasificaciones.marcas', 'Marcas', 'Gestión de marcas de productos',
+    id, 'Award', 2, 1 FROM modulos_sistema WHERE codigo = 'catalogo.clasificaciones';
+
+INSERT IGNORE INTO modulos_sistema (codigo, nombre, descripcion, modulo_padre_id, icono, orden, esta_activo)
+SELECT 'catalogo.clasificaciones.unidades', 'Unidades de Medida', 'Gestión de unidades de medida',
+    id, 'Ruler', 3, 1 FROM modulos_sistema WHERE codigo = 'catalogo.clasificaciones';
 
 -- ============================================================
 -- 3. PERMISOS DE ACCESO (tipo_accion = 'ver')
@@ -179,7 +244,8 @@ WHERE r.nombre = 'Cajero' AND r.es_rol_sistema = 1;
 
 -- ============================================================
 -- RESULTADO ESPERADO:
---   modulos_sistema: 29 filas (11 padres + 18 hijos + ventas.gastos)
---   permisos_sistema: 29 permisos (uno por módulo)
---   roles_permisos: Admin tiene todos con 'completo', Cajero tiene 7 con 'caja_asignada'
+
+--   modulos_sistema: 46 filas (11 padres + 20 hijos + 15 sub-hijos de tabs)
+--   permisos_sistema: 46 permisos (uno por módulo)
+--   roles_permisos: N × 46 (donde N = negocios con rol Administrador)
 -- ============================================================
