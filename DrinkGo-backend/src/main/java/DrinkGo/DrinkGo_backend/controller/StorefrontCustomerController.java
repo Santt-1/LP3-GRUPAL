@@ -1,6 +1,7 @@
 package DrinkGo.DrinkGo_backend.controller;
 
 import DrinkGo.DrinkGo_backend.entity.Clientes;
+import DrinkGo.DrinkGo_backend.entity.Combos;
 import DrinkGo.DrinkGo_backend.entity.DetallePedidos;
 import DrinkGo.DrinkGo_backend.entity.Devoluciones;
 import DrinkGo.DrinkGo_backend.entity.MetodosPago;
@@ -10,6 +11,7 @@ import DrinkGo.DrinkGo_backend.entity.Productos;
 import DrinkGo.DrinkGo_backend.entity.Sedes;
 import DrinkGo.DrinkGo_backend.entity.ZonasDelivery;
 import DrinkGo.DrinkGo_backend.repository.ClientesRepository;
+import DrinkGo.DrinkGo_backend.repository.CombosRepository;
 import DrinkGo.DrinkGo_backend.repository.ConfiguracionTiendaOnlineRepository;
 import DrinkGo.DrinkGo_backend.repository.DevolucionesRepository;
 import DrinkGo.DrinkGo_backend.repository.MetodosPagoRepository;
@@ -58,6 +60,9 @@ public class StorefrontCustomerController {
 
     @Autowired
     private ConfiguracionTiendaOnlineRepository configRepo;
+
+    @Autowired
+    private CombosRepository combosRepo;
 
     @Autowired
     private SedesRepository sedesRepo;
@@ -322,22 +327,11 @@ public class StorefrontCustomerController {
             if (!(itemRaw instanceof Map<?, ?> item))
                 continue;
 
+            // Soporte para ítem de combo o producto
+            Object comboIdRaw = item.get("comboId");
             Object productoIdRaw = item.get("productoId");
-            if (productoIdRaw == null)
+            if (comboIdRaw == null && productoIdRaw == null)
                 continue;
-
-            Long productoId;
-            try {
-                productoId = Long.parseLong(productoIdRaw.toString());
-            } catch (NumberFormatException e) {
-                continue;
-            }
-
-            Optional<Productos> productoOpt = productosRepo.findById(productoId);
-            if (productoOpt.isEmpty())
-                continue;
-
-            Productos producto = productoOpt.get();
 
             BigDecimal cantidad;
             try {
@@ -347,19 +341,52 @@ public class StorefrontCustomerController {
                 cantidad = BigDecimal.ONE;
             }
 
+            DetallePedidos detalle = new DetallePedidos();
             BigDecimal precioUnitario;
-            try {
-                precioUnitario = new BigDecimal(item.get("precioUnitario").toString());
-            } catch (Exception e) {
-                precioUnitario = producto.getPrecioVenta() != null
-                        ? producto.getPrecioVenta()
-                        : BigDecimal.ZERO;
+
+            if (comboIdRaw != null) {
+                // Ítem de combo
+                Long comboId;
+                try {
+                    comboId = Long.parseLong(comboIdRaw.toString());
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+                Optional<Combos> comboOpt = combosRepo.findById(comboId);
+                if (comboOpt.isEmpty())
+                    continue;
+                Combos combo = comboOpt.get();
+                try {
+                    precioUnitario = new BigDecimal(item.get("precioUnitario").toString());
+                } catch (Exception e) {
+                    precioUnitario = combo.getPrecioCombo() != null
+                            ? combo.getPrecioCombo()
+                            : BigDecimal.ZERO;
+                }
+                detalle.setCombo(combo);
+            } else {
+                // Ítem de producto
+                Long productoId;
+                try {
+                    productoId = Long.parseLong(productoIdRaw.toString());
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+                Optional<Productos> productoOpt = productosRepo.findById(productoId);
+                if (productoOpt.isEmpty())
+                    continue;
+                Productos producto = productoOpt.get();
+                try {
+                    precioUnitario = new BigDecimal(item.get("precioUnitario").toString());
+                } catch (Exception e) {
+                    precioUnitario = producto.getPrecioVenta() != null
+                            ? producto.getPrecioVenta()
+                            : BigDecimal.ZERO;
+                }
+                detalle.setProducto(producto);
             }
 
             BigDecimal subtotalDetalle = precioUnitario.multiply(cantidad);
-
-            DetallePedidos detalle = new DetallePedidos();
-            detalle.setProducto(producto);
             detalle.setCantidad(cantidad);
             detalle.setPrecioUnitario(precioUnitario);
             detalle.setSubtotal(subtotalDetalle);

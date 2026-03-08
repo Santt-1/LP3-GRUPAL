@@ -172,4 +172,20 @@ export const storefrontService = {
     const { data } = await customerApi.get(`/tienda/${slug}/mis-devoluciones`);
     return toArray(data);
   },
+
+  /* ── Combos visibles en tienda (público) ── */
+  getCombosBySlug: async (slug, sedeId) => {
+    const { data } = await publicApi.get(`/tienda/public/${slug}/combos`, {
+      params: sedeId ? { sedeId } : {},
+    });
+    return toArray(data);
+  },
+
+  /* ── Promociones vigentes (público) ── */
+  getPromocionesActivasBySlug: async (slug, sedeId) => {
+    const { data } = await publicApi.get(`/tienda/public/${slug}/promociones`, {
+      params: sedeId ? { sedeId } : {},
+    });
+    return toArray(data);
+  },
 };

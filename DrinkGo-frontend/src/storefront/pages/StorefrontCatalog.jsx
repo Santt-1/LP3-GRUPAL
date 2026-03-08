@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, ShoppingBag } from 'lucide-react';
+import { Search, ShoppingBag, Gift } from 'lucide-react';
 import { useStorefrontProducts } from '../hooks/useStorefrontProducts';
 import { useStorefrontCategories } from '../hooks/useStorefrontCategories';
+import { useStorefrontCombos } from '../hooks/useStorefrontCombos';
 import { ProductCard } from '../components/products/ProductCard';
+import { ComboCard } from '../components/products/ComboCard';
 import { CategoryFilter } from '../components/products/CategoryFilter';
 
 export const StorefrontCatalog = () => {
@@ -22,6 +24,7 @@ export const StorefrontCatalog = () => {
   });
 
   const { categorias } = useStorefrontCategories(slug);
+  const { combos, isLoading: loadingCombos } = useStorefrontCombos(slug, selectedSede?.id);
 
   const handleCategoryChange = (catId) => {
     setSelectedCategoriaId(catId);
@@ -76,6 +79,35 @@ export const StorefrontCatalog = () => {
             selectedId={selectedCategoriaId}
             onSelect={handleCategoryChange}
           />
+        </div>
+      )}
+
+      {/* Combos section */}
+      {!searchTerm && !selectedCategoriaId && (loadingCombos || combos.length > 0) && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Gift size={20} className="text-amber-500" />
+            <h2 className="text-lg font-bold text-gray-900">Combos especiales</h2>
+          </div>
+          {loadingCombos ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl border-2 border-amber-200 animate-pulse">
+                  <div className="aspect-square bg-amber-50 rounded-t-xl" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-5 bg-gray-200 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {combos.map((combo) => (
+                <ComboCard key={combo.id} combo={combo} slug={slug} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
