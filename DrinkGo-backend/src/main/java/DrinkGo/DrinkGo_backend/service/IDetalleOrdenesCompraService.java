@@ -7,6 +7,8 @@ import DrinkGo.DrinkGo_backend.entity.DetalleOrdenesCompra;
 public interface IDetalleOrdenesCompraService {
     List<DetalleOrdenesCompra> buscarTodos();
 
+    List<DetalleOrdenesCompra> buscarPorOrdenCompra(Long ordenCompraId);
+
     void guardar(DetalleOrdenesCompra detalleOrdenesCompra);
 
     void modificar(DetalleOrdenesCompra detalleOrdenesCompra);

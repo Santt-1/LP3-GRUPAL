@@ -118,6 +118,10 @@ export const detalleOrdenesCompraService = {
     const { data } = await adminApi.get('/detalle-ordenes-compra');
     return toArray(data);
   },
+  getByOrden: async (ordenCompraId) => {
+    const { data } = await adminApi.get(`/detalle-ordenes-compra/orden/${ordenCompraId}`);
+    return toArray(data);
+  },
   getById: async (id) => {
     const { data } = await adminApi.get(`/detalle-ordenes-compra/${id}`);
     return data;
