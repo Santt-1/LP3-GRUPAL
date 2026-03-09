@@ -27,6 +27,11 @@ export const devolucionesService = {
     return toArray(data);
   },
 
+  getByNegocio: async (negocioId) => {
+    const { data } = await adminApi.get(`/devoluciones/negocio/${negocioId}`);
+    return toArray(data);
+  },
+
   getById: async (id) => {
     const { data } = await adminApi.get(`/devoluciones/${id}`);
     return data;
@@ -69,6 +74,11 @@ export const devolucionesService = {
 export const detalleDevolucionesService = {
   getAll: async () => {
     const { data } = await adminApi.get('/detalle-devoluciones');
+    return toArray(data);
+  },
+
+  getByDevolucion: async (devolucionId) => {
+    const { data } = await adminApi.get(`/detalle-devoluciones/devolucion/${devolucionId}`);
     return toArray(data);
   },
 

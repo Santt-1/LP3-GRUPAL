@@ -17,6 +17,10 @@ public class DetalleDevolucionesService implements IDetalleDevolucionesService {
         return repoDetalleDevoluciones.findAll();
     }
 
+    public List<DetalleDevoluciones> buscarPorDevolucion(Long devolucionId) {
+        return repoDetalleDevoluciones.findByDevolucionId(devolucionId);
+    }
+
     public void guardar(DetalleDevoluciones detalleDevoluciones) {
         repoDetalleDevoluciones.save(detalleDevoluciones);
     }

@@ -25,6 +25,11 @@ public class DetalleOrdenesCompraController {
         return service.buscarTodos();
     }
 
+    @GetMapping("/detalle-ordenes-compra/orden/{ordenCompraId}")
+    public List<DetalleOrdenesCompra> buscarPorOrden(@PathVariable Long ordenCompraId) {
+        return service.buscarPorOrdenCompra(ordenCompraId);
+    }
+
     @PostMapping("/detalle-ordenes-compra")
     public DetalleOrdenesCompra guardar(@RequestBody DetalleOrdenesCompra entity) {
         service.guardar(entity);
