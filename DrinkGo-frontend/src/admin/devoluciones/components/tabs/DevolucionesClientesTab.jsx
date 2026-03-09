@@ -294,7 +294,7 @@ export const DevolucionesClientesTab = ({ negocioId }) => {
     { key: 'venta', title: 'Venta Asociada',
       render: (_, r) => { const n = r.venta?.numeroVenta || r.ventaId; return n ? <span className="font-mono text-sm">{n}</span> : '—'; } },
     { key: 'cliente', title: 'Cliente',
-      render: (_, r) => r.cliente?.nombreCompleto || r.cliente?.nombre || '—' },
+      render: (_, r) => r.cliente ? `${r.cliente.nombres || ''} ${r.cliente.apellidos || ''}`.trim() || r.cliente.razonSocial || '—' : '—' },
     { key: 'tipoDevolucion', title: 'Tipo', dataIndex: 'tipoDevolucion',
       render: (val) => <Badge variant={val === 'total' ? 'error' : 'warning'}>{val === 'total' ? 'Total' : 'Parcial'}</Badge> },
     { key: 'categoriaMotivo', title: 'Motivo', dataIndex: 'categoriaMotivo',
@@ -382,7 +382,7 @@ export const DevolucionesClientesTab = ({ negocioId }) => {
               className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none">
               <option value="">— Seleccione una venta —</option>
               {ventas.map((v) => (
-                <option key={v.id} value={v.id}>{v.numeroVenta} — {v.cliente?.nombreCompleto || 'Sin cliente'} — {formatCurrency(v.total)}</option>
+                <option key={v.id} value={v.id}>{v.numeroVenta} — {formatCurrency(v.total)}</option>
               ))}
             </select>
             <p className="text-xs text-gray-400 mt-1">Solo se muestran ventas completadas o parcialmente pagadas</p>
@@ -393,7 +393,7 @@ export const DevolucionesClientesTab = ({ negocioId }) => {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
                 <div>N° Venta: <span className="font-semibold">{selectedVenta.numeroVenta}</span></div>
-                <div>Cliente: <span className="font-semibold">{selectedVenta.cliente?.nombreCompleto || selectedVenta.cliente?.nombre || 'Sin cliente registrado'}</span></div>
+                <div>Cliente: <span className="font-semibold">{selectedVenta.cliente ? `${selectedVenta.cliente.nombres || ''} ${selectedVenta.cliente.apellidos || ''}`.trim() || selectedVenta.cliente.razonSocial || 'Sin nombre' : 'Sin cliente registrado'}</span></div>
                 <div>Subtotal: <span className="font-semibold">{formatCurrency(selectedVenta.subtotal)}</span></div>
                 <div>Total: <span className="font-semibold">{formatCurrency(selectedVenta.total)}</span></div>
               </div>
@@ -528,7 +528,7 @@ export const DevolucionesClientesTab = ({ negocioId }) => {
               <div><p className="text-xs text-gray-500 uppercase tracking-wider">N° Devolución</p><p className="font-medium">{selected.numeroDevolucion || '—'}</p></div>
               <div><p className="text-xs text-gray-500 uppercase tracking-wider">Estado</p><Badge variant={ESTADO_COLORS[selected.estado] || 'default'}>{ESTADO_LABELS[selected.estado] || selected.estado}</Badge></div>
               <div><p className="text-xs text-gray-500 uppercase tracking-wider">Venta Asociada</p><p className="font-medium">{selected.venta?.numeroVenta || (selected.ventaId ? `ID: ${selected.ventaId}` : '—')}</p></div>
-              <div><p className="text-xs text-gray-500 uppercase tracking-wider">Cliente</p><p className="font-medium">{selected.cliente?.nombreCompleto || selected.cliente?.nombre || '—'}</p></div>
+              <div><p className="text-xs text-gray-500 uppercase tracking-wider">Cliente</p><p className="font-medium">{selected.cliente ? `${selected.cliente.nombres || ''} ${selected.cliente.apellidos || ''}`.trim() || selected.cliente.razonSocial || '—' : '—'}</p></div>
               <div><p className="text-xs text-gray-500 uppercase tracking-wider">Tipo</p><p className="font-medium capitalize">{selected.tipoDevolucion || '—'}</p></div>
               <div><p className="text-xs text-gray-500 uppercase tracking-wider">Método de Reembolso</p><p className="font-medium capitalize">{(selected.metodoReembolso || '').replace(/_/g, ' ') || '—'}</p></div>
               <div><p className="text-xs text-gray-500 uppercase tracking-wider">Motivo</p><p className="font-medium">{MOTIVO_LABELS[selected.categoriaMotivo] || selected.categoriaMotivo || '—'}</p></div>
