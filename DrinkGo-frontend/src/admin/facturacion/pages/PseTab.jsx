@@ -30,7 +30,6 @@ const ESTADO_CONFIG = {
   aceptado:        { label: 'Aceptado',  badge: 'bg-green-100 text-green-700 border-green-300', spinner: false },
   observado:       { label: 'Observado', badge: 'bg-orange-100 text-orange-700 border-orange-300', spinner: false },
   rechazado:       { label: 'Rechazado', badge: 'bg-red-100 text-red-700 border-red-300', spinner: false },
-  anulado:         { label: 'Anulado',   badge: 'bg-gray-100 text-gray-600 border-gray-300', spinner: false },
 };
 
 const TIPO_DOC_LABELS = {
