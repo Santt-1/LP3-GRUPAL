@@ -598,8 +598,9 @@ public class AdminFacturacionController {
                         DocumentosFacturacion.EstadoDocumento.valueOf(estado);
                 docs = documentosRepo.findByNegocioIdAndEstadoDocumento(negocioId, estadoEnum);
             } else {
-                docs = documentosRepo.findByNegocioIdAndModoEmisionOrderByCreadoEnDesc(
-                        negocioId, DocumentosFacturacion.ModoEmision.PSE);
+                docs = documentosRepo.findByNegocioIdAndModoEmisionAndEstadoDocumentoNotOrderByCreadoEnDesc(
+                        negocioId, DocumentosFacturacion.ModoEmision.PSE,
+                        DocumentosFacturacion.EstadoDocumento.anulado);
             }
             return ResponseEntity.ok(docs);
         } catch (Exception e) {

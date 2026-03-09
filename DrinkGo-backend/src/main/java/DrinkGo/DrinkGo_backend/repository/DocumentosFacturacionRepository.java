@@ -33,6 +33,13 @@ public interface DocumentosFacturacionRepository extends JpaRepository<Documento
             @Param("negocioId") Long negocioId,
             @Param("modo") DocumentosFacturacion.ModoEmision modo);
 
+    /** Bandeja PSE: excluye docs anulados (nunca enviados a SUNAT) */
+    @Query("SELECT d FROM DocumentosFacturacion d WHERE d.negocio.id = :negocioId AND d.modoEmision = :modo AND d.estadoDocumento <> :excluir ORDER BY d.creadoEn DESC")
+    List<DocumentosFacturacion> findByNegocioIdAndModoEmisionAndEstadoDocumentoNotOrderByCreadoEnDesc(
+            @Param("negocioId") Long negocioId,
+            @Param("modo") DocumentosFacturacion.ModoEmision modo,
+            @Param("excluir") DocumentosFacturacion.EstadoDocumento excluir);
+
     /** Recovery en startup: buscar todos los docs en un estado específico */
     @Query("SELECT d FROM DocumentosFacturacion d WHERE d.estadoDocumento = :estado")
     List<DocumentosFacturacion> findByEstadoDocumento(@Param("estado") DocumentosFacturacion.EstadoDocumento estado);

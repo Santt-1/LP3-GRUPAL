@@ -1,10 +1,12 @@
 /**
  * ComprobantesTab.jsx
  * ───────────────────
- * Comprobantes electrónicos - facturación LOCAL.
+ * Comprobantes de facturación — LOCAL y PSE.
  * Muestra los comprobantes generados por ventas POS.
- * Estados locales: Confirmado (aceptado) y Anulado.
- * NO tiene interacción con SUNAT — eso se hace en PSE.
+ * Estados locales:
+ *  - Confirmado (activo, sin modificaciones)
+ *  - Compensado (PSE: doc sigue aceptado en SUNAT pero tiene NC que lo compensa)
+ *  - Anulado (solo local / sin PSE)
  */
 import { useState, useMemo, useCallback } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
@@ -19,12 +21,16 @@ import { Button } from '@/admin/components/ui/Button';
 import { message } from '@/shared/utils/notifications';
 
 /* ─── Mapeo de estados internos a etiquetas locales ─── */
-const getEstadoLocal = (estadoDocumento) => {
-  if (estadoDocumento === 'anulado') {
-    return { label: 'Anulado', badge: 'bg-red-50 text-red-700 border-red-200' };
+const getEstadoLocal = (doc) => {
+  if (doc.estadoDocumento === 'anulado') {
+    return { label: 'Anulado', badge: 'bg-red-50 text-red-700 border-red-200', key: 'anulado' };
+  }
+  // Compensado: doc sigue aceptado en SUNAT pero tiene NC que lo compensa
+  if (doc.motivoAnulacion && doc.motivoAnulacion.startsWith('Compensado')) {
+    return { label: 'Compensado', badge: 'bg-amber-50 text-amber-700 border-amber-200', key: 'compensado' };
   }
   // aceptado, observado, enviado, pendiente_envio, borrador → "Confirmado"
-  return { label: 'Confirmado', badge: 'bg-green-50 text-green-700 border-green-200' };
+  return { label: 'Confirmado', badge: 'bg-green-50 text-green-700 border-green-200', key: 'confirmado' };
 };
 
 const TIPO_DOC_LABELS = {
@@ -143,8 +149,9 @@ export const ComprobantesTab = () => {
   const stats = useMemo(() => {
     const total = comprobantes.length;
     const anulados = comprobantes.filter((c) => c.estadoDocumento === 'anulado').length;
-    const confirmados = total - anulados;
-    return { total, confirmados, anulados };
+    const compensados = comprobantes.filter((c) => c.estadoDocumento !== 'anulado' && c.motivoAnulacion?.startsWith('Compensado')).length;
+    const confirmados = total - anulados - compensados;
+    return { total, confirmados, anulados, compensados };
   }, [comprobantes]);
 
   /* ─── Filtrado ─── */
@@ -161,9 +168,8 @@ export const ComprobantesTab = () => {
       }
       if (filterTipo && c.tipoDocumento !== filterTipo) return false;
       if (filterEstado) {
-        const esAnulado = c.estadoDocumento === 'anulado';
-        if (filterEstado === 'confirmado' && esAnulado) return false;
-        if (filterEstado === 'anulado' && !esAnulado) return false;
+        const estado = getEstadoLocal(c);
+        if (estado.key !== filterEstado) return false;
       }
       if (fechaDesde) {
         const desde = new Date(fechaDesde);
@@ -370,10 +376,15 @@ export const ComprobantesTab = () => {
     }
   };
 
-  /** ¿Puede emitir NC/ND sobre este documento? Solo boletas/facturas no anuladas */
+  /** ¿Puede emitir NC/ND sobre este documento? */
   const puedeEmitirNcNd = (doc) => {
     if (doc.estadoDocumento === 'anulado') return false;
-    return doc.tipoDocumento === 'boleta' || doc.tipoDocumento === 'factura';
+    if (doc.tipoDocumento !== 'boleta' && doc.tipoDocumento !== 'factura') return false;
+    // Con PSE: solo sobre documentos aceptados u observados por SUNAT
+    if (tienePse) {
+      return doc.estadoDocumento === 'aceptado' || doc.estadoDocumento === 'observado';
+    }
+    return true;
   };
 
   return (
@@ -394,8 +405,8 @@ export const ComprobantesTab = () => {
         </div>
       )}
 
-      {/* ─── Stats Cards (3 cards: Total, Confirmados, Anulados) ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* ─── Stats Cards ─── */}
+      <div className={`grid grid-cols-1 gap-4 ${tienePse ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
         <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
           <div className="p-2.5 bg-blue-50 rounded-lg"><Hash size={22} className="text-blue-600" /></div>
           <div><p className="text-sm text-gray-500">Total emitidos</p><p className="text-2xl font-bold text-gray-900">{stats.total}</p></div>
@@ -404,6 +415,12 @@ export const ComprobantesTab = () => {
           <div className="p-2.5 bg-green-50 rounded-lg"><CheckCircle size={22} className="text-green-600" /></div>
           <div><p className="text-sm text-gray-500">Confirmados</p><p className="text-2xl font-bold text-gray-900">{stats.confirmados}</p></div>
         </div>
+        {tienePse && (
+          <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
+            <div className="p-2.5 bg-amber-50 rounded-lg"><AlertCircle size={22} className="text-amber-500" /></div>
+            <div><p className="text-sm text-gray-500">Compensados</p><p className="text-2xl font-bold text-gray-900">{stats.compensados}</p></div>
+          </div>
+        )}
         <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
           <div className="p-2.5 bg-red-50 rounded-lg"><AlertCircle size={22} className="text-red-500" /></div>
           <div><p className="text-sm text-gray-500">Anulados</p><p className="text-2xl font-bold text-gray-900">{stats.anulados}</p></div>
@@ -445,6 +462,7 @@ export const ComprobantesTab = () => {
           >
             <option value="">Todos los estados</option>
             <option value="confirmado">Confirmado</option>
+            {tienePse && <option value="compensado">Compensado</option>}
             <option value="anulado">Anulado</option>
           </select>
 
@@ -487,8 +505,9 @@ export const ComprobantesTab = () => {
               </thead>
               <tbody>
                 {paginated.map((doc, idx) => {
-                  const estado = getEstadoLocal(doc.estadoDocumento);
+                  const estado = getEstadoLocal(doc);
                   const esAnulado = doc.estadoDocumento === 'anulado';
+                  const esCompensado = estado.key === 'compensado';
                   return (
                     <tr key={doc.id} className="border-b border-gray-100 hover:bg-gray-50/50">
                       <td className="py-3 px-3 text-gray-400">{page * pageSize + idx + 1}</td>
@@ -514,36 +533,63 @@ export const ComprobantesTab = () => {
                           </button>
 
                           {tienePse ? (
-                            /* ── CON PSE: NC/ND y Reemitir (sin anular directo) ── */
-                            <>
-                              {!esAnulado && doc.tipoDocumento === 'nota_credito' && doc.codigoMotivoNota === '02' ? (
-                                <button
-                                  title="Reemitir comprobante con RUC corregido"
-                                  onClick={() => {
-                                    setReemitirTarget(doc);
-                                    setReemitirRuc('');
-                                    setReemitirRazonSocial('');
-                                    setReemitirDireccion('');
-                                    consultaRuc.reset();
-                                  }}
-                                  className="text-green-600 hover:text-green-800"
-                                >
-                                  <FileText size={16} />
-                                </button>
-                              ) : !esAnulado && puedeEmitirNcNd(doc) ? (
-                                <button
-                                  title="Emitir Nota de Crédito/Débito"
-                                  onClick={() => handleOpenNcNd(doc)}
-                                  className="text-amber-600 hover:text-amber-800"
-                                >
-                                  <FileText size={16} />
-                                </button>
-                              ) : (
+                            /* ── CON PSE ── */
+                            (() => {
+                              const noEnviadoAun = doc.estadoDocumento === 'pendiente_envio' || doc.estadoDocumento === 'borrador';
+                              if (esAnulado || esCompensado) {
+                                return (
+                                  <span className="text-gray-300 opacity-40 cursor-default inline-flex">
+                                    {noEnviadoAun ? <X size={16} /> : <FileText size={16} />}
+                                  </span>
+                                );
+                              }
+                              if (noEnviadoAun) {
+                                /* No enviado a SUNAT → se puede anular directamente */
+                                return (
+                                  <button
+                                    title="Anular comprobante"
+                                    onClick={() => setAnularTarget(doc)}
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                );
+                              }
+                              /* Ya enviado a SUNAT → NC/ND o Reemitir */
+                              if (doc.tipoDocumento === 'nota_credito' && doc.codigoMotivoNota === '02') {
+                                return (
+                                  <button
+                                    title="Reemitir comprobante con RUC corregido"
+                                    onClick={() => {
+                                      setReemitirTarget(doc);
+                                      setReemitirRuc('');
+                                      setReemitirRazonSocial('');
+                                      setReemitirDireccion('');
+                                      consultaRuc.reset();
+                                    }}
+                                    className="text-green-600 hover:text-green-800"
+                                  >
+                                    <FileText size={16} />
+                                  </button>
+                                );
+                              }
+                              if (puedeEmitirNcNd(doc)) {
+                                return (
+                                  <button
+                                    title="Emitir Nota de Crédito/Débito"
+                                    onClick={() => handleOpenNcNd(doc)}
+                                    className="text-amber-600 hover:text-amber-800"
+                                  >
+                                    <FileText size={16} />
+                                  </button>
+                                );
+                              }
+                              return (
                                 <span className="text-gray-300 opacity-40 cursor-default inline-flex">
                                   <FileText size={16} />
                                 </span>
-                              )}
-                            </>
+                              );
+                            })()
                           ) : (
                             /* ── SIN PSE: solo anular (sin NC/ND) ── */
                             !esAnulado && puedeEmitirNcNd(doc) ? (
@@ -611,8 +657,7 @@ export const ComprobantesTab = () => {
         />
       )}
 
-      {/* ─── Modal anulación con razón (solo sin PSE) ─── */}
-      {!tienePse && (
+      {/* ─── Modal anulación con razón ─── */}
       <Modal
         isOpen={!!anularTarget}
         onClose={() => { setAnularTarget(null); setRazonAnulacion(''); }}
@@ -647,7 +692,6 @@ export const ComprobantesTab = () => {
           </div>
         </div>
       </Modal>
-      )}
 
       {/* ─── Modal Nota de Crédito / Débito (solo con PSE) ─── */}
       {tienePse && (

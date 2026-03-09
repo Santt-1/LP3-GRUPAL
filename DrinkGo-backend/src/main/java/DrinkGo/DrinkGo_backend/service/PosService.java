@@ -1009,7 +1009,7 @@ public class PosService {
         List<Object[]> permisos = usuariosRolesRepo.findPermisosConAlcanceByUsuarioId(usuarioId);
         for (Object[] row : permisos) {
             String codigo = (String) row[0];
-            String alcance = (String) row[1];
+            String alcance = row[1] != null ? row[1].toString() : "completo";
             if ("completo".equalsIgnoreCase(alcance)) {
                 // Coincidencia exacta o padre jerárquico
                 if (codigoModulo.equals(codigo) || codigoModulo.startsWith(codigo + ".")) {

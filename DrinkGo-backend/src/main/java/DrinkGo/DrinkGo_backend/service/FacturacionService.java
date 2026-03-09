@@ -212,6 +212,18 @@ public class FacturacionService {
             throw new IllegalStateException("No se puede emitir NC/ND sobre un documento anulado");
         }
 
+        // Si el negocio tiene PSE, solo se permite NC/ND sobre documentos aceptados u observados por SUNAT
+        boolean usaPse = Boolean.TRUE.equals(docOriginal.getNegocio().getTienePse());
+        if (usaPse) {
+            DocumentosFacturacion.EstadoDocumento estado = docOriginal.getEstadoDocumento();
+            if (estado != DocumentosFacturacion.EstadoDocumento.aceptado
+                    && estado != DocumentosFacturacion.EstadoDocumento.observado) {
+                throw new IllegalStateException(
+                        "Solo se puede emitir NC/ND sobre documentos aceptados u observados por SUNAT. "
+                        + "Estado actual: " + estado);
+            }
+        }
+
         // ── 2. Determinar tipo de documento NC o ND ──
         String tipoNota = request.getTipoNota();
         DocumentosFacturacion.TipoDocumento tipoDoc;
@@ -565,9 +577,16 @@ public class FacturacionService {
 
         // 11-A. Anulación con devolución física (01, 06): anula doc + venta + stock + dinero opcional
         if (esNotaCredito && MOTIVOS_ANULACION_CON_DEVOLUCION.contains(codigoMotivo)) {
-            docOriginal.setEstadoDocumento(DocumentosFacturacion.EstadoDocumento.anulado);
-            docOriginal.setMotivoAnulacion("Anulado por " + TIPO_DOC_LABELS.get(tipoDoc)
-                    + " " + numeroDocumento + " (Motivo SUNAT: " + codigoMotivo + ")");
+            // Con PSE: el comprobante sigue aceptado en SUNAT, solo se marca internamente como compensado.
+            // Sin PSE: se marca como anulado (documento local).
+            if (usarPse) {
+                docOriginal.setMotivoAnulacion("Compensado por " + TIPO_DOC_LABELS.get(tipoDoc)
+                        + " " + numeroDocumento + " (Motivo SUNAT: " + codigoMotivo + ")");
+            } else {
+                docOriginal.setEstadoDocumento(DocumentosFacturacion.EstadoDocumento.anulado);
+                docOriginal.setMotivoAnulacion("Anulado por " + TIPO_DOC_LABELS.get(tipoDoc)
+                        + " " + numeroDocumento + " (Motivo SUNAT: " + codigoMotivo + ")");
+            }
             documentosRepo.save(docOriginal);
 
             Ventas venta = docOriginal.getVenta();
@@ -594,9 +613,16 @@ public class FacturacionService {
 
         // 11-B. Corrección documental (02, 03): solo anula el documento, NO stock, NO venta
         if (esNotaCredito && MOTIVOS_CORRECCION_DOCUMENTAL.contains(codigoMotivo)) {
-            docOriginal.setEstadoDocumento(DocumentosFacturacion.EstadoDocumento.anulado);
-            docOriginal.setMotivoAnulacion("Anulado por " + TIPO_DOC_LABELS.get(tipoDoc)
-                    + " " + numeroDocumento + " (Motivo SUNAT: " + codigoMotivo + ")");
+            // Con PSE: el comprobante sigue aceptado en SUNAT, solo se marca internamente como compensado.
+            // Sin PSE: se marca como anulado (documento local).
+            if (usarPse) {
+                docOriginal.setMotivoAnulacion("Compensado por " + TIPO_DOC_LABELS.get(tipoDoc)
+                        + " " + numeroDocumento + " (Motivo SUNAT: " + codigoMotivo + ")");
+            } else {
+                docOriginal.setEstadoDocumento(DocumentosFacturacion.EstadoDocumento.anulado);
+                docOriginal.setMotivoAnulacion("Anulado por " + TIPO_DOC_LABELS.get(tipoDoc)
+                        + " " + numeroDocumento + " (Motivo SUNAT: " + codigoMotivo + ")");
+            }
             documentosRepo.save(docOriginal);
             // No se restaura stock ni se anula la venta — es corrección de datos del documento.
             // No se permite devolución de dinero para estos motivos.
