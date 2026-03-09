@@ -1,27 +1,55 @@
-import { BarChart3 } from 'lucide-react';
+import { useState } from 'react';
+import { CreditCard, Package, Warehouse, Truck, FileText, History } from 'lucide-react';
+import { VentasReporteTab } from '@/admin/reportes/components/tabs/VentasReporteTab';
+import { ProductosReporteTab } from '@/admin/reportes/components/tabs/ProductosReporteTab';
+import { InventarioReporteTab } from '@/admin/reportes/components/tabs/InventarioReporteTab';
+import { ComprasGastosReporteTab } from '@/admin/reportes/components/tabs/ComprasGastosReporteTab';
+import { ComprobantesReporteTab } from '@/admin/reportes/components/tabs/ComprobantesReporteTab';
+import { MovimientosInventarioReporteTab } from '@/admin/reportes/components/tabs/MovimientosInventarioReporteTab';
+
+const TABS = [
+  { id: 'ventas',        label: 'Ventas',          icon: CreditCard, Component: VentasReporteTab },
+  { id: 'productos',     label: 'Productos',        icon: Package,    Component: ProductosReporteTab },
+  { id: 'inventario',    label: 'Inventario',       icon: Warehouse,  Component: InventarioReporteTab },
+  { id: 'compras',       label: 'Compras y Gastos', icon: Truck,      Component: ComprasGastosReporteTab },
+  { id: 'comprobantes',  label: 'Comprobantes',     icon: FileText,   Component: ComprobantesReporteTab },
+  { id: 'movimientos',   label: 'Movimientos',      icon: History,    Component: MovimientosInventarioReporteTab },
+];
 
 export const Reportes = () => {
+  const [activeTab, setActiveTab] = useState('ventas');
+  const { Component: ActiveComponent } = TABS.find((t) => t.id === activeTab) ?? {};
+
   return (
     <div className="space-y-6">
+      {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
-        <p className="text-gray-600 mt-1">
-          Informes de ventas, inventario, compras, clientes y rendimiento del negocio
-        </p>
+        <p className="text-gray-600 mt-1">Análisis y estadísticas del negocio</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <BarChart3 size={32} className="text-gray-500" />
-        </div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">
-          Reportes
-        </h2>
-        <p className="text-gray-500 max-w-sm">
-          Reportes detallados de ventas, compras, inventario, rentabilidad y
-          comportamiento de clientes con exportación a Excel/PDF. Módulo en construcción.
-        </p>
+      {/* Barra de tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex gap-1 overflow-x-auto">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                activeTab === id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Icon size={16} />
+              {label}
+            </button>
+          ))}
+        </nav>
       </div>
+
+      {/* Contenido del tab activo */}
+      {ActiveComponent && <ActiveComponent />}
     </div>
   );
 };

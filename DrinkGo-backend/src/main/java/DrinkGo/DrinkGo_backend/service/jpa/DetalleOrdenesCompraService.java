@@ -17,6 +17,10 @@ public class DetalleOrdenesCompraService implements IDetalleOrdenesCompraService
         return repoDetalleOrdenesCompra.findAll();
     }
 
+    public List<DetalleOrdenesCompra> buscarPorOrdenCompra(Long ordenCompraId) {
+        return repoDetalleOrdenesCompra.findByOrdenCompraId(ordenCompraId);
+    }
+
     public void guardar(DetalleOrdenesCompra detalleOrdenesCompra) {
         repoDetalleOrdenesCompra.save(detalleOrdenesCompra);
     }

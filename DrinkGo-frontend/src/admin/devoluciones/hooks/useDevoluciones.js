@@ -2,7 +2,7 @@
  * useDevoluciones.js
  * ──────────────────
  * Hook de React Query para CRUD de devoluciones.
- * Filtra client-side por negocioId (multi-tenant) y permite filtrar
+ * Consulta por negocioId (multi-tenant) y filtra client-side
  * por origen: 'clientes' (venta_id) o 'proveedores' (pedido_id / compra).
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,18 +12,14 @@ import { message } from '@/shared/utils/notifications';
 export const useDevoluciones = (negocioId, origen = 'todos') => {
   const queryClient = useQueryClient();
 
-  /* ─── Query: listar todas las devoluciones ─── */
+  /* ─── Query: listar devoluciones por negocio ─── */
   const devolucionesQuery = useQuery({
     queryKey: ['devoluciones', negocioId, origen],
-    queryFn: devolucionesService.getAll,
+    queryFn: () => devolucionesService.getByNegocio(negocioId),
     enabled: !!negocioId,
     select: (data) => {
-      // Filtrar por negocio
-      let filtered = data.filter(
-        (d) => (d.negocio?.id ?? d.negocioId) === negocioId
-      );
+      let filtered = data;
 
-      // Filtrar por origen si corresponde
       if (origen === 'clientes') {
         filtered = filtered.filter((d) => d.venta || d.ventaId || d.cliente || d.clienteId);
       } else if (origen === 'proveedores') {

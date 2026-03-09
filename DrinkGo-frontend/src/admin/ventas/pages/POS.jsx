@@ -23,6 +23,7 @@ import { useCrearVenta, useMetodosPago } from '../hooks/useVentas';
 import { useSeries } from '@/admin/facturacion/hooks/useFacturacion';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { SinCajaAsignada } from '../components/SinCajaAsignada';
+import { cuentasMesaService } from '../services/cuentasMesaService';
 import { formatCurrency, formatDateTime } from '@/shared/utils/formatters';
 
 export const POS = () => {
@@ -48,6 +49,8 @@ export const POS = () => {
   const suspendCart = useCartStore((s) => s.suspendCart);
   const recoverCart = useCartStore((s) => s.recoverCart);
   const discardSuspendedCart = useCartStore((s) => s.discardSuspendedCart);
+  const mesaContext = useCartStore((s) => s.mesaContext);
+  const clearMesaContext = useCartStore((s) => s.clearMesaContext);
 
   /* ─── Sincronizar config IGV del negocio al carrito ─── */
   useEffect(() => {
@@ -214,6 +217,20 @@ export const POS = () => {
 
       setShowPagoModal(false);
       clearCart();
+
+      /* ─ Post-venta: si viene de una mesa, remover detalles y/o cerrar cuenta ─ */
+      if (mesaContext) {
+        const ctx = mesaContext;
+        clearMesaContext();
+        try {
+          for (const id of (ctx.detalleIds ?? [])) {
+            await cuentasMesaService.removerProducto(id);
+          }
+          if (ctx.closeOnSuccess) {
+            await cuentasMesaService.cerrarCuenta(ctx.cuentaId, user?.id);
+          }
+        } catch { /* best-effort: venta ya confirmada */ }
+      }
     } catch (err) {
       // Cerrar modal de pago para que el cajero vea el carrito actualizado.
       setShowPagoModal(false);
@@ -271,6 +288,22 @@ export const POS = () => {
 
   return (
     <div className="space-y-4">
+      {/* Banner de mesa activa */}
+      {mesaContext && (
+        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-sm">
+          <span className="text-green-800 font-medium">
+            🍽️ Cobrando {mesaContext.mesaNombre} — {mesaContext.numeroCuenta}
+            {!mesaContext.closeOnSuccess && ' (cobro parcial)'}
+          </span>
+          <button
+            onClick={() => { clearMesaContext(); navigate('/admin/ventas/mesas'); }}
+            className="text-xs text-green-600 hover:text-green-800 underline"
+          >
+            Volver a mesas
+          </button>
+        </div>
+      )}
+
       {/* Header con info de turno */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
