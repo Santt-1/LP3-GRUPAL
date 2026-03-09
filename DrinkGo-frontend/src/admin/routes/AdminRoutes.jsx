@@ -28,6 +28,14 @@ import { TransferenciasTab } from '../inventario/components/tabs/TransferenciasT
 import { ReportesInventarioPage } from '../inventario/components/tabs/ReportesInventarioPage';
 
 
+/* ─── Reportes sub-páginas ─── */
+import { VentasReporteTab } from '../reportes/components/tabs/VentasReporteTab';
+import { ProductosReporteTab } from '../reportes/components/tabs/ProductosReporteTab';
+import { InventarioReporteTab } from '../reportes/components/tabs/InventarioReporteTab';
+import { ComprasGastosReporteTab } from '../reportes/components/tabs/ComprasGastosReporteTab';
+import { ComprobantesReporteTab } from '../reportes/components/tabs/ComprobantesReporteTab';
+import { MovimientosInventarioReporteTab } from '../reportes/components/tabs/MovimientosInventarioReporteTab';
+
 /* ─── Compras sub-páginas ─── */
 import { ProveedoresTab } from '../compras/components/tabs/ProveedoresTab';
 import { ProductosProveedorTab } from '../compras/components/tabs/ProductosProveedorTab';
@@ -133,7 +141,15 @@ export const AdminRoutes = () => {
           <Route path="series" element={<SeriesTab />} />
           <Route path="pse" element={<PseTab />} />
         </Route>
-        <Route path="reportes" element={<Reportes />} />
+        <Route path="reportes" element={<Reportes />}>
+          <Route index element={<Navigate to="ventas" replace />} />
+          <Route path="ventas" element={<VentasReporteTab />} />
+          <Route path="productos" element={<ProductosReporteTab />} />
+          <Route path="inventario" element={<InventarioReporteTab />} />
+          <Route path="compras-gastos" element={<ComprasGastosReporteTab />} />
+          <Route path="comprobantes" element={<ComprobantesReporteTab />} />
+          <Route path="movimientos" element={<MovimientosInventarioReporteTab />} />
+        </Route>
         <Route path="perfil" element={<MiPerfil />} />
       </Route>
     </Routes>
