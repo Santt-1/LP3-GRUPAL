@@ -14,11 +14,11 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/restful': {
-        target: 'https://licores.spring.informaticapp.com',
+        target: 'http://licores.spring.informaticapp.com:6677',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'https://licores.spring.informaticapp.com',
+        target: 'http://licores.spring.informaticapp.com:6677',
         changeOrigin: true,
       },
     },
